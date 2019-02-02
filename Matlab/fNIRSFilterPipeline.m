@@ -4,6 +4,7 @@
  
 function [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy]= fNIRSFilterPipeline(d, SD, samprate)
     %depends on Homer2 package
+    warning off; %sometimes hmrIntensity2Conc gives a warning we don't care about here
     %see hmrMotionArtifact in Homer2 documentation for parameter description
     numchannels = size(d,2)/2;
     tInc = hmrMotionArtifact(d, samprate, SD, ones(length(d)), 0.5, 2, 10, 5);
@@ -27,5 +28,6 @@ function [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy]= fNIRSFilterPipeline
         z_oxy(:,c) = dnormed(:,1,c);
         z_deoxy(:,c) = dnormed(:,2,c);
         z_totaloxy(:,c) = dnormed(:,3,c);
-    end  
+    end
+    warning on;
 end

@@ -2,15 +2,20 @@
 %path must be in brain_data folder (where your raw data folders are)
 %required inpaint_nans, homer2 scripts 
 
-function preprocessingfNIRS(raw_dir, dataprefix, dyads)
-%inputs: raw_dir: folder path with all single-subject or dyad-level raw data
-%                 files (path must be relative to current matlab path).
+function preprocessingfNIRS(dataprefix, dyads)
+%inputs: 
 %       dataprefix: string. Prefix of every folder name that should be considered a
-%       data folder. E.g., MIN for MIN_101, MIN_102, etc.  
+%       data folder. E.g., ST for ST_101, ST_102, etc.  
 %       dyads: 0 or 1. 1 if hyperscanning, 0 if single subject. 
 %
-%outputs: preprocessed and .nirs files in same directory level as raw_dir
+%outputs: preprocessed and .nirs files in a new folder in rawdir called
+%           'PreProcessedFiles', sorted by subject
 
+%if you get 'WARNING: Some data points in d are zero...' this is ok.
+%this would normally indicate noise in our data, but since we're doing
+%motion correction before filtering, our motion correction algorithm might
+%force the data into negative numbers while still being good data. you can
+%ignore this.
 
 %DEBUGGING TIPS:
 %Note that this function is, well, funcitonal, but not 100% optimized for
@@ -27,28 +32,35 @@ function preprocessingfNIRS(raw_dir, dataprefix, dyads)
 %   - Delete all false start files from the data directory, or will cause
 %   script to error out. 
 
-currdir=dir(strcat(raw_dir,'/',dataprefix,'*'));
+rawdir=uigetdir('','Choose Data Directory');
 
-[probefile,probepath] = uigetfile('*_probeInfo.mat');
+currdir=dir(strcat(rawdir,filesep,dataprefix,'*'));
+if length(currdir)<1
+    error(['ERROR: No data files found with ',dataprefix,' prefix']);
+end
+
+[probefile,probepath] = uigetfile('*_probeInfo.mat','Choose probeInfo File');
 load(fullfile(probepath,probefile));
 if ~exist('probeInfo','var')
     error('ERROR: Invalid probeInfo file (does not contain a probeInfo object');
 end
 
+%hidden pep talk: You are an awesome, smart person! You can do this!
+
 if dyads
     fprintf('\n\t Preprocessing ...\n')
     reverseStr = '';
+    Elapsedtime = tic;
     for i=1:length(currdir);
         dyad=currdir(i).name;
         msg = sprintf('\n\t dyad number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);
-        reverseStr = repmat(sprintf('\b'),1,length(msg));
-        dyaddir=dir(strcat(raw_dir,'/',dyad,'/',dataprefix,'*'));
-        if isfolder('Subject1')
-            subj1folder = strcat(raw_dir,'/',dyad,'/Subject1');
-            subj2folder = strcat(raw_dir,'/',dyad,'/Subject2');
+        reverseStr = repmat(sprintf('\b'),1,length(msg));      
+        if isdir(strcat(rawdir,filesep,dyad,filesep,'Subject1'))
+            subj1folder = strcat(rawdir,filesep,dyad,filesep,'Subject1');
+            subj2folder = strcat(rawdir,filesep,dyad,filesep,'Subject2');
             
-            outpath = strcat('PreProcessedFiles/',dyad);
+            outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,dyad);
             if ~exist(outpath,'dir')
             
                 %1) extract data values
@@ -103,24 +115,25 @@ if dyads
                 [oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
 
                 mkdir(outpath)
-                save(strcat(outpath,'/',scanname,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
-                save(strcat(outpath,'/',scanname,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
+                save(strcat(outpath,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
+                save(strcat(outpath,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
                 SD=SD1;
                 d=d1;
                 s=s1;
-                save(strcat(outpath,'/',scanname,'_subj1.nirs'),'aux','d','s','SD','t');
+                save(strcat(outpath,'_subj1.nirs'),'aux','d','s','SD','t');
                 SD=SD2;
                 d=d2;
                 s=s2;
-                save(strcat(outpath,'/',scanname,'_subj2.nirs'),'aux','d','s','SD','t');
+                save(strcat(outpath,'_subj2.nirs'),'aux','d','s','SD','t');
             end
         else
+            dyaddir=dir(strcat(rawdir,filesep,dyad,filesep,dataprefix,'*'));
             for j=1:length(dyaddir)
                 scanname = dyaddir(j).name;
-                subj1folder = strcat(raw_dir,'/',dyad,'/',scanname,'/Subject1');
-                subj2folder = strcat(raw_dir,'/',dyad,'/',scanname,'/Subject2');
+                subj1folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject1');
+                subj2folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject2');
  
-                outpath = strcat('PreProcessedFiles/',dyad,'/',scanname);
+                outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,dyad,filesep,scanname);
                 if ~exist(outpath,'dir')
             
                 %1) extract data values
@@ -152,34 +165,37 @@ if dyads
                     [oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
 
                     mkdir(outpath)
-                    save(strcat(outpath,'/',scanname,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
-                    save(strcat(outpath,'/',scanname,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
+                    save(strcat(outpath,filesep,scanname,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
+                    save(strcat(outpath,filesep,scanname,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
                     SD=SD1;
                     d=d1;
                     s=s1;
-                    save(strcat(outpath,'/',scanname,'_subj1.nirs'),'aux','d','s','SD','t');
+                    save(strcat(outpath,filesep,scanname,'_subj1.nirs'),'aux','d','s','SD','t');
                     SD=SD2;
                     d=d2;
                     s=s2;
-                    save(strcat(outpath,'/',scanname,'_subj2.nirs'),'aux','d','s','SD','t');
+                    save(strcat(outpath,filesep,scanname,'_subj2.nirs'),'aux','d','s','SD','t');
                 end
             end
         end
     end
-    
+    Elapsedtime = toc(Elapsedtime);
+    fprintf('\n\t Elapsed time: %g seconds \n', Elapsedtime);
 else
     %all again but no dyad stuff
     fprintf('\n\t Preprocessing ...\n')
     reverseStr = '';
+    Elapsedtime = tic;
     for i=1:length(currdir);
         subj=currdir(i).name;
-        subjdir=dir(strcat(raw_dir,'/',subj,'/',dataprefix,'*'));
+        subjdir=dir(strcat(rawdir,filesep,subj,filesep,dataprefix,'*'));
         msg = sprintf('\n\t subject number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);
         reverseStr = repmat(sprintf('\b'),1,length(msg));
-        if ~isfolder(subjdir(1).name)
-            subjfolder = strcat(raw_dir,'/',subj);
-            outpath = strcat('PreProcessedFiles/',subj);
+        %if there is only one scan per participant
+        if isempty(subjdir) || ~isdir(strcat(rawdir,filesep,subj,filesep,subjdir(1).name))
+            subjfolder = strcat(rawdir,filesep,subj);
+            outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,subj);
             if ~exist(outpath,'dir')
                 %1) extract data values
                 [d, sd_ind, samprate, wavelengths, s] = extractNIRxData(subjfolder);
@@ -202,15 +218,16 @@ else
                 [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
             
                 mkdir(outpath) 
-                save(strcat(outpath,'/',scanname,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy');
-                save(strcat(outpath,'/',scanname,'.nirs'),'aux','d','s','SD','t');
+                save(strcat(outpath,filesep,subj,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy');
+                save(strcat(outpath,filesep,subj,'.nirs'),'aux','d','s','SD','t');
             end
+        %if there are more than one scan per participant    
         else
             for j=1:length(subjdir)
                 scanname = subjdir(j).name;
-                subjfolder = strcat(raw_dir,'/',subj,'/',scanname);
+                subjfolder = strcat(rawdir,filesep,subj,filesep,scanname);
             
-                outpath = strcat('PreProcessedFiles/',subj,'/',scanname);
+                outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,subj,filesep,scanname);
                 if ~exist(outpath,'dir')
                     %1) extract data values
                     [d, sd_ind, samprate, wavelengths, s] = extractNIRxData(subjfolder);
@@ -233,11 +250,13 @@ else
                     [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
             
                     mkdir(outpath) 
-                    save(strcat(outpath,'/',scanname,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy');
-                    save(strcat(outpath,'/',scanname,'.nirs'),'aux','d','s','SD','t');
+                    save(strcat(outpath,filesep,scanname,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy');
+                    save(strcat(outpath,filesep,scanname,'.nirs'),'aux','d','s','SD','t');
                 end
             end
         end
     end
+    Elapsedtime = toc(Elapsedtime);
+    fprintf('\n\t Elapsed time: %g seconds\n', Elapsedtime);
 end
 end

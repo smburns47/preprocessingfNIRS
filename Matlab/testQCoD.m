@@ -1,4 +1,4 @@
-function [channelmask, QCoDvector] = testQCoD(testsubjectpath, QCoDthresh, suppressPlot)   
+function [channelmask, QCoDvector] = testQCoD(QCoDthresh, suppressPlot)   
 %       plots the power spectral density graphs of the given test subject, 
 %       as well as the automatic bad channel detection to make sure your 
 %       chosen CoV threshold is performing as you want it to. Does NOT do any 
@@ -7,12 +7,14 @@ function [channelmask, QCoDvector] = testQCoD(testsubjectpath, QCoDthresh, suppr
 %       before the full preprocessing job.
 
 %INPUTS: testsubjpath: relative path to one scan folder with all raw nirx files
-%        QCoDthresh: QCoD threshold to test out
+%        QCoDthresh: QCoD threshold to test out. The default threshold in
+%                   removeBadChannels is 0.1
 %        suppressPlot: 0 or 1. 0 to let plots happen, 1 to keep them from
-%        coming up.
+%                   coming up.
 %
 %OUTPUTS: the channelmask and vector of QCoD values
 
+    testsubjectpath=uigetdir('','Choose A Scan Folder of Subject to Test');
     [d, ~, samprate] = extractNIRxData(testsubjectpath);
     numchannels = size(d,2)/2;
     channelmask = ones(1,numchannels);

@@ -12,7 +12,6 @@ function channelmask = removeBadChannels(d, samprate, satlength, QCoDthresh)
         if sum(isnan(d(:,c)))>0
              if ~isempty(strfind(isnan(d(:,c)), true(1,round(satlength*samprate)))) 
                   channelmask(1,c)=0;
-                  channelmask(1,c+numchannels)=0;
              end
              newch = inpaint_nans(d(:,c),4);
              d(:,c)=newch;
@@ -20,7 +19,6 @@ function channelmask = removeBadChannels(d, samprate, satlength, QCoDthresh)
         if sum(isnan(d(:,c+numchannels)))>0
              if ~isempty(strfind(isnan(d(:,c+numchannels)), true(1,round(satlength*samprate)))) 
                   channelmask(1,c)=0;
-                  channelmask(1,c+numchannels)=0;
              end
              newch = inpaint_nans(d(:,c+numchannels),4);
              d(:,c+numchannels)=newch;

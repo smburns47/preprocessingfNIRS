@@ -65,11 +65,12 @@ function s = getEvents(hdrString, d)
     events = cell2mat(cellfun(@str2num,hdrString(ind:ind2),'UniformOutput',0));
     if ~isempty(events)
         events = events(:,2:3);
+        events = unique(events,'rows');
         events = events(events(:,2)~=0,:);
         markertypes = unique(events(:,1));
         s = zeros(size(d,1),length(markertypes));
         for j=1:length(markertypes)
-            s(events(:,2))=1;
+            s(events(:,2),j)=1;
         end
     else
         s = zeros(size(d,1),1);
