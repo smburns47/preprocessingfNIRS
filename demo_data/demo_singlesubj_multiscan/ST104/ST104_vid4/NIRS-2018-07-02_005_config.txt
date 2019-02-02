@@ -1,0 +1,11 @@
+raw_data_name='NIRS-2018-07-02_005';
+Subject=1
+SamplingRate=1.95; 
+waveLength_N=2; 
+Wavelengths=[760	850]; 
+source_N=32;
+detector_N=32;
+time_point_N=520;
+source_detector_key=[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0;...
+                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32];
+probeInfo_file='C:\NIRx\Montages\FullHead2_32x32\Standard_probeInfo.mat';
