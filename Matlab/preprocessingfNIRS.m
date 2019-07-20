@@ -51,7 +51,7 @@ if dyads
     fprintf('\n\t Preprocessing ...\n')
     reverseStr = '';
     Elapsedtime = tic;
-    for i=1:length(currdir);
+    for i=1:length(currdir)
         dyad=currdir(i).name;
         msg = sprintf('\n\t dyad number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);

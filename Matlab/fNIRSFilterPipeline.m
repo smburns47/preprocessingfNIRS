@@ -15,12 +15,12 @@ function [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy]= fNIRSFilterPipeline
     dnormed = zscore(dconverted);
     dnormed(:,:,(SD.MeasListAct')==0)=NaN;
     dconverted(:,:,(SD.MeasListAct')==0)=NaN;
-    oxy = zeros(length(dconverted), numchannels);
-    deoxy = zeros(length(dconverted), numchannels);
-    totaloxy = zeros(length(dconverted), numchannels);
-    z_oxy = zeros(length(dnormed), numchannels);
-    z_deoxy = zeros(length(dnormed), numchannels);
-    z_totaloxy = zeros(length(dnormed), numchannels);
+    oxy = zeros(size(dconverted,1), numchannels);
+    deoxy = zeros(size(dconverted,1), numchannels);
+    totaloxy = zeros(size(dconverted,1), numchannels);
+    z_oxy = zeros(size(dnormed,1), numchannels);
+    z_deoxy = zeros(size(dnormed,1), numchannels);
+    z_totaloxy = zeros(size(dnormed,1), numchannels);
     for c = 1:numchannels
         oxy(:,c) = dconverted(:,1,c);
         deoxy(:,c) = dconverted(:,2,c);
