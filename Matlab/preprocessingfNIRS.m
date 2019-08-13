@@ -39,11 +39,18 @@ if length(currdir)<1
     error(['ERROR: No data files found with ',dataprefix,' prefix']);
 end
 
-[probefile,probepath] = uigetfile('*_probeInfo.mat','Choose probeInfo File');
-load(fullfile(probepath,probefile));
-if ~exist('probeInfo','var')
-    error('ERROR: Invalid probeInfo file (does not contain a probeInfo object');
+supported_devices = {'NIRx','TechEn'};
+[device,~] = listdlg('PromptString', 'Select acquisition device:',...
+    'SelectionMode', 'single', 'ListString', supported_devices);
+
+if device==1
+    [probefile,probepath] = uigetfile('*_probeInfo.mat','Choose probeInfo File');
+    load(fullfile(probepath,probefile));
+    if ~exist('probeInfo','var')
+        error('ERROR: Invalid probeInfo file (does not contain a probeInfo object');
+    end
 end
+    
 
 %hidden pep talk: You are an awesome, smart person! You can do this!
 
@@ -56,28 +63,45 @@ if dyads
         msg = sprintf('\n\t dyad number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);
         reverseStr = repmat(sprintf('\b'),1,length(msg));      
-        if isdir(strcat(rawdir,filesep,dyad,filesep,'Subject1'))
-            subj1folder = strcat(rawdir,filesep,dyad,filesep,'Subject1');
-            subj2folder = strcat(rawdir,filesep,dyad,filesep,'Subject2');
+        if exist(strcat(rawdir,filesep,dyad,filesep,'Subject1*'))
+            subj1folder = strcat(rawdir,filesep,dyad,filesep,'Subject1*');
+            subj2folder = strcat(rawdir,filesep,dyad,filesep,'Subject2*');
             
             outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,dyad);
             if ~exist(outpath,'dir')
             
                 %1) extract data values
-                [d1, sd_ind1, ~, ~, s1] = extractNIRxData(subj1folder);
-                [d2, sd_ind2, samprate, wavelengths, s2] = extractNIRxData(subj2folder);
-    
-                probenumchannels = probeInfo.probes.nChannel0;
-                datanumchannels = size(d1,2)/2;
-                if probenumchannels~=datanumchannels
-                    error('ERROR: number of data channels in subj1 hdr file does not match number of channels in probeInfo file.');
+                if device==1
+                    [d1, sd_ind1, ~, ~, s1] = extractNIRxData(subj1folder);
+                    [d2, sd_ind2, samprate, wavelengths, s2] = extractNIRxData(subj2folder);
+                    probenumchannels = probeInfo.probes.nChannel0;
+                    datanumchannels = size(d1,2)/2;
+                    if probenumchannels~=datanumchannels
+                        error('ERROR: number of data channels in subj1 hdr file does not match number of channels in probeInfo file.');
+                    end
+                    probenumchannels = probeInfo.probes.nChannel0;
+                    datanumchannels = size(d2,2)/2;
+                    if probenumchannels~=datanumchannels
+                        error('ERROR: number of data channels in subj2 hdr file does not match number of channels in probeInfo file.');
+                    end
+                elseif device==2
+                    [d1, samprate, s1, SD1, aux, t] = extractTechEnData(subj1folder);
+                    [d2, ~, s2, SD2, ~, ~] = extractTechEnData(subj2folder);
                 end
-                probenumchannels = probeInfo.probes.nChannel0;
-                datanumchannels = size(d2,2)/2;
-                if probenumchannels~=datanumchannels
-                    error('ERROR: number of data channels in subj2 hdr file does not match number of channels in probeInfo file.');
-                end
-                %2) identify and remove bad channels
+                
+                %2) Trim beginning of data to 30s before onset, if there is
+                %a lot of dead time before that 
+                ssum = sum(s1,2);
+                stimmarks = find(ssum);
+                begintime = stimmarks(1) - samprate*30;
+                d1 = d1(begintime:end,:);
+                d2 = d2(begintime:end,:);
+                s1 = s1(begintime:end);
+                s2 = s2(begintime:end);
+                aux = aux(begintime:end,:);
+                t = t(begintime:end);
+
+                %3) identify and remove bad channels
                 %bad channel defined as any where detector saturation occurs for >2sec, 
                 %or where power spectrum variation is too high. 
                 %Feel free to change these parameters if you have a good reason to do so
@@ -95,8 +119,8 @@ if dyads
                 %(https://en.wikipedia.org/wiki/Quartile_coefficient_of_dispersion)
                 %to automatically decide which channels have good or bad
                 %signal. Essentially, it sums the frequency amplitudes in the
-                %first and third quartiles of the frequency range, and then
-                %compares them via (Q1-Q3)/(Q1+Q3). Larger QCoD is cleaner
+                %first and fourth quartiles of the frequency range, and then
+                %compares them via (Q1-Q4)/(Q1+Q4). Larger QCoD is cleaner
                 %signal. Default threshold is set to 0.1. Change this to <0.1 
                 %to allow for greater noise in the signal, or change to >0.1 
                 %for more stringency.  
@@ -106,11 +130,18 @@ if dyads
                 channelmask1 = removeBadChannels(d1, samprate, satlength, QCoDthresh);
                 channelmask2 = removeBadChannels(d2, samprate, satlength, QCoDthresh);
     
-                %3) convert to .nirs format
-                [SD1, ~, ~] = getMiscNirsVars(d1, sd_ind1, samprate, wavelengths, probeInfo, channelmask1);
-                [SD2, aux, t] = getMiscNirsVars(d2, sd_ind2, samprate, wavelengths, probeInfo, channelmask2);
+                %4) convert to .nirs format
+                if device==1
+                    [SD1, ~, ~] = getMiscNirsVars(d1, sd_ind1, samprate, wavelengths, probeInfo, channelmask1);
+                    [SD2, aux, t] = getMiscNirsVars(d2, sd_ind2, samprate, wavelengths, probeInfo, channelmask2);
+                elseif device==2
+                    SD1.MeasListAct = [channelmask1'; channelmask1'];
+                    SD1.MeasListVis = SD1.MeasListAct;
+                    SD2.MeasListAct = [channelmask2'; channelmask2'];
+                    SD2.MeasListVis = SD2.MeasListAct;
+                end
             
-                %4) motion filter, convert to hemodynamic changes
+                %5) motion filter, convert to hemodynamic changes
                 [oxy1, deoxy1, totaloxy1, z_oxy1, z_deoxy1, z_totaloxy1] = fNIRSFilterPipeline(d1, SD1, samprate);
                 [oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
 
@@ -130,37 +161,61 @@ if dyads
             dyaddir=dir(strcat(rawdir,filesep,dyad,filesep,dataprefix,'*'));
             for j=1:length(dyaddir)
                 scanname = dyaddir(j).name;
-                subj1folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject1');
-                subj2folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject2');
+                subj1folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject1*');
+                subj2folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject2*');
  
                 outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,dyad,filesep,scanname);
                 if ~exist(outpath,'dir')
             
                 %1) extract data values
-                    [d1, sd_ind1, ~, ~, s1] = extractNIRxData(subj1folder);
-                    [d2, sd_ind2, samprate, wavelengths, s2] = extractNIRxData(subj2folder);
+                    if device==1
+                        [d1, sd_ind1, ~, ~, s1] = extractNIRxData(subj1folder);
+                        [d2, sd_ind2, samprate, wavelengths, s2] = extractNIRxData(subj2folder);
+                        probenumchannels = probeInfo.probes.nChannel0;
+                        datanumchannels = size(d1,2)/2;
+                        if probenumchannels~=datanumchannels
+                            error('ERROR: number of data channels in subj1 hdr file does not match number of channels in probeInfo file.');
+                        end
+                        probenumchannels = probeInfo.probes.nChannel0;
+                        datanumchannels = size(d2,2)/2;
+                        if probenumchannels~=datanumchannels
+                            error('ERROR: number of data channels in subj2 hdr file does not match number of channels in probeInfo file.');
+                        end
+                    elseif device==2
+                        [d1, samprate, s1, SD1, aux, t] = extractTechEnData(subj1folder);
+                        [d2, ~, s2, SD2, ~, ~] = extractTechEnData(subj2folder);
+                    end
     
-                    probenumchannels = probeInfo.probes.nChannel0;
-                    datanumchannels = size(d1,2)/2;
-                    if probenumchannels~=datanumchannels
-                        error('ERROR: number of data channels in subj1 hdr file does not match number of channels in probeInfo file.');
-                    end
-                    probenumchannels = probeInfo.probes.nChannel0;
-                    datanumchannels = size(d2,2)/2;
-                    if probenumchannels~=datanumchannels
-                        error('ERROR: number of data channels in subj2 hdr file does not match number of channels in probeInfo file.');
-                    end
-                    %2) identify and remove bad channels
+                    %2) Trim beginning of data to 30s before onset, if there is
+                    %a lot of dead time before that 
+                    ssum = sum(s1,2);
+                    stimmarks = find(ssum);
+                    begintime = stimmarks(1) - samprate*30;
+                    d1 = d1(begintime:end,:);
+                    d2 = d2(begintime:end,:);
+                    s1 = s1(begintime:end);
+                    s2 = s2(begintime:end);
+                    aux = aux(begintime:end,:);
+                    t = t(begintime:end);
+                    
+                    %3) identify and remove bad channels
                     satlength = 2; %in seconds
                     QCoDthresh = 0.1;
                     channelmask1 = removeBadChannels(d1, samprate, satlength, QCoDthresh);
                     channelmask2 = removeBadChannels(d2, samprate, satlength, QCoDthresh);
     
-                    %3) convert to .nirs format
-                    [SD1, ~, ~] = getMiscNirsVars(d1, sd_ind1, samprate, wavelengths, probeInfo, channelmask1);
-                    [SD2, aux, t] = getMiscNirsVars(d2, sd_ind2, samprate, wavelengths, probeInfo, channelmask2);
-            
-                    %4) motion filter, convert to hemodynamic changes
+                    %4) convert to .nirs format
+                    if device==1
+                        [SD1, ~, ~] = getMiscNirsVars(d1, sd_ind1, samprate, wavelengths, probeInfo, channelmask1);
+                        [SD2, aux, t] = getMiscNirsVars(d2, sd_ind2, samprate, wavelengths, probeInfo, channelmask2);
+                    elseif device==2
+                        SD1.MeasListAct = [channelmask1'; channelmask1'];
+                        SD1.MeasListVis = SD1.MeasListAct;
+                        SD2.MeasListAct = [channelmask2'; channelmask2'];
+                        SD2.MeasListVis = SD2.MeasListAct;
+                    end
+                    
+                    %5) motion filter, convert to hemodynamic changes
                     [oxy1, deoxy1, totaloxy1, z_oxy1, z_deoxy1, z_totaloxy1] = fNIRSFilterPipeline(d1, SD1, samprate);
                     [oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
 
@@ -197,24 +252,43 @@ else
             subjfolder = strcat(rawdir,filesep,subj);
             outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,subj);
             if ~exist(outpath,'dir')
-                %1) extract data values
-                [d, sd_ind, samprate, wavelengths, s] = extractNIRxData(subjfolder);
                 
-                probenumchannels = probeInfo.probes.nChannel0;
-                datanumchannels = size(d,2)/2;
-                if probenumchannels~=datanumchannels
-                    error('ERROR: number of data channels in hdr file does not match number of channels in probeInfo file.');
+                %1) extract data values
+                if device==1
+                    [d, sd_ind, samprate, wavelengths, s] = extractNIRxData(subjfolder);
+                    probenumchannels = probeInfo.probes.nChannel0;
+                    datanumchannels = size(d,2)/2;
+                    if probenumchannels~=datanumchannels
+                        error('ERROR: number of data channels in hdr file does not match number of channels in probeInfo file.');
+                    end
+                elseif device==2
+                    [d, samprate, s, SD, aux, t] = extractTechEnData(subjfolder);
                 end
-    
-                %2) identify and remove bad channels
+                
+                %2) Trim beginning of data to 30s before onset, if there is
+                %a lot of dead time before that 
+                ssum = sum(s,2);
+                stimmarks = find(ssum);
+                begintime = stimmarks(1) - samprate*30;
+                d = d(begintime:end,:);
+                s = s(begintime:end);
+                aux = aux(begintime:end,:);
+                t = t(begintime:end);
+                
+                %3) identify and remove bad channels
                 satlength = 2; %in seconds
                 QCoDthresh = 0.1;
                 channelmask = removeBadChannels(d, samprate, satlength, QCoDthresh);
     
-                %3) convert to .nirs format
-                [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, channelmask);
+                %4) convert to .nirs format
+                if device==1
+                    [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, channelmask);
+                elseif device==2
+                   SD.MeasListAct = [channelmask'; channelmask'];
+                   SD.MeasListVis = SD.MeasListAct;
+                end
             
-                %4) motion filter, convert to hemodynamic changes
+                %5) motion filter, convert to hemodynamic changes
                 [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
             
                 mkdir(outpath) 
@@ -229,24 +303,43 @@ else
             
                 outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,subj,filesep,scanname);
                 if ~exist(outpath,'dir')
+                    
                     %1) extract data values
-                    [d, sd_ind, samprate, wavelengths, s] = extractNIRxData(subjfolder);
-                
-                    probenumchannels = probeInfo.probes.nChannel0;
-                    datanumchannels = size(d,2)/2;
-                    if probenumchannels~=datanumchannels
-                        error('ERROR: number of data channels in hdr file does not match number of channels in probeInfo file.');
+                    if device==1
+                        [d, sd_ind, samprate, wavelengths, s] = extractNIRxData(subjfolder);
+                        probenumchannels = probeInfo.probes.nChannel0;
+                        datanumchannels = size(d,2)/2;
+                        if probenumchannels~=datanumchannels
+                            error('ERROR: number of data channels in hdr file does not match number of channels in probeInfo file.');
+                        end
+                    elseif device==2
+                        [d, samprate, s, SD, aux, t] = extractTechEnData(subjfolder);
                     end
-    
-                    %2) identify and remove bad channels
+                    
+                    %2) Trim beginning of data to 30s before onset, if there is
+                    %a lot of dead time before that 
+                    ssum = sum(s,2);
+                    stimmarks = find(ssum);
+                    begintime = stimmarks(1) - samprate*30;
+                    d = d(begintime:end,:);
+                    s = s(begintime:end);
+                    aux = aux(begintime:end,:);
+                    t = t(begintime:end);
+
+                    %3) identify and remove bad channels
                     satlength = 2; %in seconds
                     QCoDthresh = 0.1;
                     channelmask = removeBadChannels(d, samprate, satlength, QCoDthresh);
     
-                    %3) convert to .nirs format
-                    [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, channelmask);
+                    %4) convert to .nirs format
+                    if device==1
+                        [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, channelmask);
+                    elseif device==2
+                        SD.MeasListAct = [channelmask'; channelmask'];
+                        SD.MeasListVis = SD.MeasListAct;
+                    end
             
-                    %4) motion filter, convert to hemodynamic changes
+                    %5) motion filter, convert to hemodynamic changes
                     [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
             
                     mkdir(outpath) 

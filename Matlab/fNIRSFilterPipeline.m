@@ -7,7 +7,7 @@ function [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy]= fNIRSFilterPipeline
     warning off; %sometimes hmrIntensity2Conc gives a warning we don't care about here
     %see hmrMotionArtifact in Homer2 documentation for parameter description
     numchannels = size(d,2)/2;
-    tInc = hmrMotionArtifact(d, samprate, SD, ones(length(d)), 0.5, 2, 10, 5);
+    tInc = hmrMotionArtifact(d, samprate, SD, ones(length(d),1), 0.5, 2, 10, 5);
     %see hmrMotionCorrectPCA in Homer2 documentation for parameter description
     [dfiltered,~,~] = hmrMotionCorrectPCA(SD, d, tInc, 2);
     %see hmrIntensity2Conc in Homer2 documentation for parameter description
