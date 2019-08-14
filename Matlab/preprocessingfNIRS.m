@@ -68,6 +68,9 @@ if dyads
             subj2folder = strcat(rawdir,filesep,dyad,filesep,'Subject2*');
             
             outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,dyad);
+            if device==2
+                outpath = outpath(1:end-5);
+            end
             if ~exist(outpath,'dir')
             
                 %1) extract data values
@@ -96,8 +99,8 @@ if dyads
                 begintime = stimmarks(1) - samprate*30;
                 d1 = d1(begintime:end,:);
                 d2 = d2(begintime:end,:);
-                s1 = s1(begintime:end);
-                s2 = s2(begintime:end);
+                s1 = s1(begintime:end,:);
+                s2 = s2(begintime:end,:);
                 aux = aux(begintime:end,:);
                 t = t(begintime:end);
 
@@ -142,18 +145,18 @@ if dyads
                 end
             
                 %5) motion filter, convert to hemodynamic changes
-                [oxy1, deoxy1, totaloxy1, z_oxy1, z_deoxy1, z_totaloxy1] = fNIRSFilterPipeline(d1, SD1, samprate);
-                [oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
+                [new_d1, oxy1, deoxy1, totaloxy1, z_oxy1, z_deoxy1, z_totaloxy1] = fNIRSFilterPipeline(d1, SD1, samprate);
+                [new_d2, oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
 
                 mkdir(outpath)
-                save(strcat(outpath,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
-                save(strcat(outpath,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
+                save(strcat(outpath,filesep,dyad,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
+                save(strcat(outpath,filesep,dyad,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
                 SD=SD1;
-                d=d1;
+                d=new_d1;
                 s=s1;
                 save(strcat(outpath,'_subj1.nirs'),'aux','d','s','SD','t');
                 SD=SD2;
-                d=d2;
+                d=new_d2;
                 s=s2;
                 save(strcat(outpath,'_subj2.nirs'),'aux','d','s','SD','t');
             end
@@ -165,6 +168,9 @@ if dyads
                 subj2folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject2*');
  
                 outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,dyad,filesep,scanname);
+                if device==2
+                    outpath = outpath(1:end-5);
+                end
                 if ~exist(outpath,'dir')
             
                 %1) extract data values
@@ -193,8 +199,8 @@ if dyads
                     begintime = stimmarks(1) - samprate*30;
                     d1 = d1(begintime:end,:);
                     d2 = d2(begintime:end,:);
-                    s1 = s1(begintime:end);
-                    s2 = s2(begintime:end);
+                    s1 = s1(begintime:end,:);
+                    s2 = s2(begintime:end,:);
                     aux = aux(begintime:end,:);
                     t = t(begintime:end);
                     
@@ -216,18 +222,18 @@ if dyads
                     end
                     
                     %5) motion filter, convert to hemodynamic changes
-                    [oxy1, deoxy1, totaloxy1, z_oxy1, z_deoxy1, z_totaloxy1] = fNIRSFilterPipeline(d1, SD1, samprate);
-                    [oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
+                    [new_d1, oxy1, deoxy1, totaloxy1, z_oxy1, z_deoxy1, z_totaloxy1] = fNIRSFilterPipeline(d1, SD1, samprate);
+                    [new_d2, oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
 
                     mkdir(outpath)
                     save(strcat(outpath,filesep,scanname,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
                     save(strcat(outpath,filesep,scanname,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
                     SD=SD1;
-                    d=d1;
+                    d=new_d1;
                     s=s1;
                     save(strcat(outpath,filesep,scanname,'_subj1.nirs'),'aux','d','s','SD','t');
                     SD=SD2;
-                    d=d2;
+                    d=new_d2;
                     s=s2;
                     save(strcat(outpath,filesep,scanname,'_subj2.nirs'),'aux','d','s','SD','t');
                 end
@@ -236,6 +242,7 @@ if dyads
     end
     Elapsedtime = toc(Elapsedtime);
     fprintf('\n\t Elapsed time: %g seconds \n', Elapsedtime);
+    
 else
     %all again but no dyad stuff
     fprintf('\n\t Preprocessing ...\n')
@@ -251,6 +258,9 @@ else
         if isempty(subjdir) || ~isdir(strcat(rawdir,filesep,subj,filesep,subjdir(1).name))
             subjfolder = strcat(rawdir,filesep,subj);
             outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,subj);
+            if device==2
+                outpath = outpath(1:end-5);
+            end
             if ~exist(outpath,'dir')
                 
                 %1) extract data values
@@ -271,7 +281,7 @@ else
                 stimmarks = find(ssum);
                 begintime = stimmarks(1) - samprate*30;
                 d = d(begintime:end,:);
-                s = s(begintime:end);
+                s = s(begintime:end,:);
                 aux = aux(begintime:end,:);
                 t = t(begintime:end);
                 
@@ -289,9 +299,13 @@ else
                 end
             
                 %5) motion filter, convert to hemodynamic changes
-                [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
+                [new_d, oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
             
-                mkdir(outpath) 
+                mkdir(outpath)
+                if device==2
+                    subj=subj(1:end-5);
+                end
+                d=new_d;
                 save(strcat(outpath,filesep,subj,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy');
                 save(strcat(outpath,filesep,subj,'.nirs'),'aux','d','s','SD','t');
             end
@@ -302,6 +316,9 @@ else
                 subjfolder = strcat(rawdir,filesep,subj,filesep,scanname);
             
                 outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,subj,filesep,scanname);
+                if device==2
+                    outpath = outpath(1:end-5);
+                end
                 if ~exist(outpath,'dir')
                     
                     %1) extract data values
@@ -322,7 +339,7 @@ else
                     stimmarks = find(ssum);
                     begintime = stimmarks(1) - samprate*30;
                     d = d(begintime:end,:);
-                    s = s(begintime:end);
+                    s = s(begintime:end,:);
                     aux = aux(begintime:end,:);
                     t = t(begintime:end);
 
@@ -340,9 +357,13 @@ else
                     end
             
                     %5) motion filter, convert to hemodynamic changes
-                    [oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
+                    [new_d, oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
             
-                    mkdir(outpath) 
+                    mkdir(outpath)
+                    if device==2
+                        scanname=scanname(1:end-5);
+                    end
+                    d=new_d;
                     save(strcat(outpath,filesep,scanname,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy');
                     save(strcat(outpath,filesep,scanname,'.nirs'),'aux','d','s','SD','t');
                 end
