@@ -337,11 +337,15 @@ else
                     %a lot of dead time before that 
                     ssum = sum(s,2);
                     stimmarks = find(ssum);
-                    begintime = stimmarks(1) - samprate*30;
-                    d = d(begintime:end,:);
-                    s = s(begintime:end,:);
-                    aux = aux(begintime:end,:);
-                    t = t(begintime:end);
+                    if length(stimmarks)>=1
+                        begintime = stimmarks(1) - samprate*30;
+                        if begintime>0
+                            d = d(begintime:end,:);
+                            s = s(begintime:end,:);
+                            aux = aux(begintime:end,:);
+                            t = t(begintime:end);
+                        end
+                    end
 
                     %3) identify and remove bad channels
                     satlength = 2; %in seconds
