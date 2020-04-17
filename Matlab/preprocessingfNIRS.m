@@ -445,6 +445,7 @@ else
     Elapsedtime = toc(Elapsedtime);
     fprintf('\n\t Elapsed time: %g seconds\n', Elapsedtime);
 end
-end
 
 qualityAssessment(dataprefix,dyads,multiscan,size(d,2),samprate,0.1,strcat(rawdir,filesep,'PreProcessedFiles'));
+
+end
