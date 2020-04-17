@@ -66,9 +66,9 @@ if dyads
         msg = sprintf('\n\t dyad number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);
         reverseStr = repmat(sprintf('\b'),1,length(msg));      
-        if exist(strcat(rawdir,filesep,dyad,filesep,'Subject1*'),'dir')
-            subj1folder = strcat(rawdir,filesep,dyad,filesep,'Subject1*');
-            subj2folder = strcat(rawdir,filesep,dyad,filesep,'Subject2*');
+        if exist(strcat(rawdir,filesep,dyad,filesep,'Subject1'),'dir')
+            subj1folder = strcat(rawdir,filesep,dyad,filesep,'Subject1');
+            subj2folder = strcat(rawdir,filesep,dyad,filesep,'Subject2');
             
             outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,dyad);
             if device==2
@@ -186,8 +186,8 @@ if dyads
             dyaddir=dir(strcat(rawdir,filesep,dyad,filesep,dataprefix,'*'));
             for j=1:length(dyaddir)
                 scanname = dyaddir(j).name;
-                subj1folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject1*');
-                subj2folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject2*');
+                subj1folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject1');
+                subj2folder = strcat(rawdir,filesep,dyad,filesep,scanname,filesep,'Subject2');
  
                 outpath = strcat(rawdir,filesep,'PreProcessedFiles',filesep,dyad,filesep,scanname);
                 if device==2
