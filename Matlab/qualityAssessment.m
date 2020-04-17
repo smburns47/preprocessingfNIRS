@@ -39,7 +39,7 @@ fprintf('\n\t Generating data quality reports ...\n')
     reverseStr = '';
     
 if dyads
-    qatable_corr = array2table(zeros(length(currdir)*2,1));
+    qatable_corr = array2table(cell(length(currdir)*2,1));
     qatable_corr.Properties.VariableNames={'subjname'};
     qatable_ps = qatable_corr;
     qatable_noise = qatable_corr;
@@ -63,11 +63,11 @@ if dyads
             varnames = [{'channelnum'} scannames];
             subjtable1_corr.Properties.VariableNames=varnames;
         end
-        subjtable_ps1 = subjtable_corr1;
-        subjtable_noise1 = subjtable_corr1;
-        subjtable_corr2 = subjtable_corr1;
-        subjtable_ps2 = subjtable_corr1;
-        subjtable_noise2 = subjtable_corr1;
+        subjtable1_ps = subjtable1_corr;
+        subjtable1_noise = subjtable1_corr;
+        subjtable2_corr = subjtable1_corr;
+        subjtable2_ps = subjtable1_corr;
+        subjtable2_noise = subjtable1_corr;
         qatable_corr.subjname{i*2-1} = strcat(dyad,'_1');
         qatable_corr.subjname{i*2} = strcat(dyad,'_2');
         qatable_ps.subjname{i*2-1} = strcat(dyad,'_1');
@@ -81,7 +81,7 @@ if dyads
                 subscanname = regexprep(subscanname,'_','');
                 if ~any(strcmp(scannames,subscanname))
                     scannames = [scannames,subscanname];
-                    qatable2 = array2table(zeros(length(currdir),1));
+                    qatable2 = array2table(zeros(length(currdir)*2,1));
                     chtable2 = array2table(zeros(channelnum,1));
                     qatable2.Properties.VariableNames={subscanname};
                     chtable2.Properties.VariableNames={subscanname};
@@ -105,8 +105,8 @@ if dyads
                    channelcount_corr = 0;
                    channelcount_ps = 0;
                    noisecount = 0;
-                   for k=1:size(z_oxy,2)
-                       trace = z_oxy(:,k);
+                   for k=1:size(z_oxy1,2)
+                       trace = z_oxy1(:,k);
                        if ~any(isnan(trace))
                            trace_orig = trace;
                            offset=round(samprate);
@@ -148,8 +148,8 @@ if dyads
                    channelcount_corr = 0;
                    channelcount_ps = 0;
                    noisecount = 0;
-                   for k=1:size(z_oxy,2)
-                       trace = z_oxy(:,k);
+                   for k=1:size(z_oxy2,2)
+                       trace = z_oxy2(:,k);
                        if ~any(isnan(trace))
                            trace_orig = trace;
                            offset=round(samprate);
@@ -229,8 +229,8 @@ if dyads
                load(strcat(preprocdir,filesep,dyad,filesep,scandir(1).name))
                channelcount_corr = 0;
                channelcount_ps = 0;
-               for k=1:size(z_oxy,2)
-                   trace = z_oxy(:,k);
+               for k=1:size(z_oxy1,2)
+                   trace = z_oxy1(:,k);
                    if ~any(isnan(trace))
                        trace_orig = trace;
                        offset=round(samprate);
@@ -270,8 +270,8 @@ if dyads
                load(strcat(preprocdir,filesep,dyad,filesep,scandir(1).name))
                channelcount_corr = 0;
                channelcount_ps = 0;
-               for k=1:size(z_oxy,2)
-                   trace = z_oxy(:,k);
+               for k=1:size(z_oxy2,2)
+                   trace = z_oxy2(:,k);
                    if ~any(isnan(trace))
                        trace_orig = trace;
                        offset=round(samprate);
