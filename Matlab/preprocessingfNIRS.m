@@ -32,6 +32,9 @@ function preprocessingfNIRS(dataprefix, dyads)
 %   - Delete all false start files from the data directory, or will cause
 %   script to error out. 
 
+% added_path = [pwd,'/utils'];
+% addpath(added_path);
+
 rawdir=uigetdir('','Choose Data Directory');
 
 currdir=dir(strcat(rawdir,filesep,dataprefix,'*'));
@@ -50,20 +53,20 @@ if device==1
         error('ERROR: Invalid probeInfo file (does not contain a probeInfo object');
     end
 end
-    
+multiscan=0;
 
-%hidden pep talk: You are an awesome, smart person! You can do this!
+
+fprintf('\n\t Preprocessing ...\n')
+reverseStr = '';
+Elapsedtime = tic;
 
 if dyads
-    fprintf('\n\t Preprocessing ...\n')
-    reverseStr = '';
-    Elapsedtime = tic;
     for i=1:length(currdir)
         dyad=currdir(i).name;
         msg = sprintf('\n\t dyad number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);
         reverseStr = repmat(sprintf('\b'),1,length(msg));      
-        if exist(strcat(rawdir,filesep,dyad,filesep,'Subject1*'))
+        if exist(strcat(rawdir,filesep,dyad,filesep,'Subject1*'),'dir')
             subj1folder = strcat(rawdir,filesep,dyad,filesep,'Subject1*');
             subj2folder = strcat(rawdir,filesep,dyad,filesep,'Subject2*');
             
@@ -92,17 +95,27 @@ if dyads
                     [d2, ~, s2, SD2, ~, ~] = extractTechEnData(subj2folder);
                 end
                 
-                %2) Trim beginning of data to 30s before onset, if there is
+                %2) Trim beginning of data to 10s before onset, if there is
                 %a lot of dead time before that 
                 ssum = sum(s1,2);
                 stimmarks = find(ssum);
-                begintime = stimmarks(1) - samprate*30;
-                d1 = d1(begintime:end,:);
-                d2 = d2(begintime:end,:);
-                s1 = s1(begintime:end,:);
-                s2 = s2(begintime:end,:);
-                aux = aux(begintime:end,:);
-                t = t(begintime:end);
+                if length(stimmarks)>=1
+                    begintime = stimmarks(1) - round(samprate*10);
+                    if begintime>0
+                        d1 = d1(begintime:end,:);
+                        d2 = d2(begintime:end,:);
+                        s1 = s1(begintime:end,:);
+                        s2 = s2(begintime:end,:);
+                        stimmarks = stimmarks-begintime;
+                    end
+                end
+                
+                %trim off last ten seconds, to remove edge artifacts that
+                %might mess up hemodynamics calculation
+                d1 = d1((1:end-round(10*samprate)),:);
+                d2 = d2((1:end-round(10*samprate)),:);
+                s1 = s1((1:end-round(10*samprate)),:);
+                s2 = s2((1:end-round(10*samprate)),:);
 
                 %3) identify and remove bad channels
                 %bad channel defined as any where detector saturation occurs for >2sec, 
@@ -143,14 +156,22 @@ if dyads
                     SD2.MeasListAct = [channelmask2'; channelmask2'];
                     SD2.MeasListVis = SD2.MeasListAct;
                 end
+                if length(stimmarks)>=1
+                    if begintime>0
+                        aux = aux(begintime:end,:);
+                        t = t(begintime:end);
+                    end
+                end
+                aux = aux((1:end-round(10*samprate)),:);
+                t = t((1:end-round(10*samprate)),:);
             
                 %5) motion filter, convert to hemodynamic changes
                 [new_d1, oxy1, deoxy1, totaloxy1, z_oxy1, z_deoxy1, z_totaloxy1] = fNIRSFilterPipeline(d1, SD1, samprate);
                 [new_d2, oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
 
                 mkdir(outpath)
-                save(strcat(outpath,filesep,dyad,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
-                save(strcat(outpath,filesep,dyad,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
+                save(strcat(outpath,filesep,dyad,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1','stimmarks');
+                save(strcat(outpath,filesep,dyad,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2','stimmarks');
                 SD=SD1;
                 d=new_d1;
                 s=s1;
@@ -161,6 +182,7 @@ if dyads
                 save(strcat(outpath,'_subj2.nirs'),'aux','d','s','SD','t');
             end
         else
+            multiscan=1;
             dyaddir=dir(strcat(rawdir,filesep,dyad,filesep,dataprefix,'*'));
             for j=1:length(dyaddir)
                 scanname = dyaddir(j).name;
@@ -192,25 +214,35 @@ if dyads
                         [d2, ~, s2, SD2, ~, ~] = extractTechEnData(subj2folder);
                     end
     
-                    %2) Trim beginning of data to 30s before onset, if there is
+                    %2) Trim beginning of data to 10s before onset, if there is
                     %a lot of dead time before that 
                     ssum = sum(s1,2);
                     stimmarks = find(ssum);
-                    begintime = stimmarks(1) - samprate*30;
-                    d1 = d1(begintime:end,:);
-                    d2 = d2(begintime:end,:);
-                    s1 = s1(begintime:end,:);
-                    s2 = s2(begintime:end,:);
-                    aux = aux(begintime:end,:);
-                    t = t(begintime:end);
+                    if length(stimmarks)>=1
+                        begintime = stimmarks(1) - round(samprate*10);
+                        if begintime>0
+                            d1 = d1(begintime:end,:);
+                            d2 = d2(begintime:end,:);
+                            s1 = s1(begintime:end,:);
+                            s2 = s2(begintime:end,:);
+                            stimmarks = stimmarks-begintime;
+                        end
+                    end
+                    
+                    %trim off last ten seconds, to remove edge artifacts that
+                    %might mess up hemodynamics calculation
+                    d1 = d1((1:end-round(10*samprate)),:);
+                    d2 = d2((1:end-round(10*samprate)),:);
+                    s1 = s1((1:end-round(10*samprate)),:);
+                    s2 = s2((1:end-round(10*samprate)),:);
                     
                     %3) identify and remove bad channels
                     satlength = 2; %in seconds
                     QCoDthresh = 0.1;
                     channelmask1 = removeBadChannels(d1, samprate, satlength, QCoDthresh);
                     channelmask2 = removeBadChannels(d2, samprate, satlength, QCoDthresh);
-    
-                    %4) convert to .nirs format
+                    
+                    %4)Prep rest of .nirs format
                     if device==1
                         [SD1, ~, ~] = getMiscNirsVars(d1, sd_ind1, samprate, wavelengths, probeInfo, channelmask1);
                         [SD2, aux, t] = getMiscNirsVars(d2, sd_ind2, samprate, wavelengths, probeInfo, channelmask2);
@@ -220,14 +252,22 @@ if dyads
                         SD2.MeasListAct = [channelmask2'; channelmask2'];
                         SD2.MeasListVis = SD2.MeasListAct;
                     end
+                    if length(stimmarks)>=1
+                        if begintime>0
+                            aux = aux(begintime:end,:);
+                            t = t(begintime:end);
+                        end
+                    end
+                    aux = aux((1:end-round(10*samprate)),:);
+                    t = t((1:end-round(10*samprate)),:);
                     
                     %5) motion filter, convert to hemodynamic changes
                     [new_d1, oxy1, deoxy1, totaloxy1, z_oxy1, z_deoxy1, z_totaloxy1] = fNIRSFilterPipeline(d1, SD1, samprate);
                     [new_d2, oxy2, deoxy2, totaloxy2, z_oxy2, z_deoxy2, z_totaloxy2] = fNIRSFilterPipeline(d2, SD2, samprate);
 
                     mkdir(outpath)
-                    save(strcat(outpath,filesep,scanname,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1');
-                    save(strcat(outpath,filesep,scanname,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2');
+                    save(strcat(outpath,filesep,scanname,'_subj1_preprocessed.mat'),'oxy1', 'deoxy1', 'totaloxy1','z_oxy1', 'z_deoxy1', 'z_totaloxy1','stimmarks');
+                    save(strcat(outpath,filesep,scanname,'_subj2_preprocessed.mat'),'oxy2', 'deoxy2', 'totaloxy2','z_oxy2', 'z_deoxy2', 'z_totaloxy2','stimmarks');
                     SD=SD1;
                     d=new_d1;
                     s=s1;
@@ -275,30 +315,46 @@ else
                     [d, samprate, s, SD, aux, t] = extractTechEnData(subjfolder);
                 end
                 
-                %2) Trim beginning of data to 30s before onset, if there is
+                %2) Trim beginning of data to 10s before onset, if there is
                 %a lot of dead time before that 
                 ssum = sum(s,2);
                 stimmarks = find(ssum);
-                begintime = stimmarks(1) - samprate*30;
-                d = d(begintime:end,:);
-                s = s(begintime:end,:);
-                aux = aux(begintime:end,:);
-                t = t(begintime:end);
+                if length(stimmarks)>=1
+                    begintime = stimmarks(1) - round(samprate*10);
+                    if begintime>0
+                        d = d(begintime:end,:);
+                        s = s(begintime:end,:);
+                        stimmarks = stimmarks-begintime;
+                    end
+                end
+                
+                %trim off last ten seconds, to remove edge artifacts that
+                %might mess up hemodynamics calculation
+                d = d((1:end-round(10*samprate)),:);
+                s = s((1:end-round(10*samprate)),:);
                 
                 %3) identify and remove bad channels
                 satlength = 2; %in seconds
                 QCoDthresh = 0.1;
                 channelmask = removeBadChannels(d, samprate, satlength, QCoDthresh);
-    
-                %4) convert to .nirs format
+            
+                %4)Prep rest of .nirs format
                 if device==1
                     [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, channelmask);
                 elseif device==2
-                   SD.MeasListAct = [channelmask'; channelmask'];
-                   SD.MeasListVis = SD.MeasListAct;
+                    SD.MeasListAct = [channelmask'; channelmask'];
+                    SD.MeasListVis = SD.MeasListAct;
                 end
-            
-                %5) motion filter, convert to hemodynamic changes
+                if length(stimmarks)>=1
+                    if begintime>0
+                        aux = aux(begintime:end,:);
+                        t = t(begintime:end);
+                    end
+                end
+                aux = aux((1:end-round(10*samprate)),:);
+                t = t((1:end-round(10*samprate)),:);
+                
+                %4) motion filter, convert to hemodynamic changes
                 [new_d, oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
             
                 mkdir(outpath)
@@ -306,11 +362,12 @@ else
                     subj=subj(1:end-5);
                 end
                 d=new_d;
-                save(strcat(outpath,filesep,subj,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy');
+                save(strcat(outpath,filesep,subj,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','stimmarks');
                 save(strcat(outpath,filesep,subj,'.nirs'),'aux','d','s','SD','t');
             end
         %if there are more than one scan per participant    
         else
+            multiscan=1;
             for j=1:length(subjdir)
                 scanname = subjdir(j).name;
                 subjfolder = strcat(rawdir,filesep,subj,filesep,scanname);
@@ -333,33 +390,44 @@ else
                         [d, samprate, s, SD, aux, t] = extractTechEnData(subjfolder);
                     end
                     
-                    %2) Trim beginning of data to 30s before onset, if there is
+                    %2) Trim beginning of data to 10s before onset, if there is
                     %a lot of dead time before that 
                     ssum = sum(s,2);
                     stimmarks = find(ssum);
                     if length(stimmarks)>=1
-                        begintime = stimmarks(1) - samprate*30;
+                        begintime = stimmarks(1) - round(samprate*10);
                         if begintime>0
                             d = d(begintime:end,:);
                             s = s(begintime:end,:);
-                            aux = aux(begintime:end,:);
-                            t = t(begintime:end);
+                            stimmarks = stimmarks-begintime;
                         end
                     end
+                    %trim off last ten seconds, to remove edge artifacts that
+                    %might mess up hemodynamics calculation
+                    d = d((1:end-round(10*samprate)),:);
+                    s = s((1:end-round(10*samprate)),:);
 
                     %3) identify and remove bad channels
                     satlength = 2; %in seconds
                     QCoDthresh = 0.1;
                     channelmask = removeBadChannels(d, samprate, satlength, QCoDthresh);
-    
-                    %4) convert to .nirs format
+                    
+                    %4)Prep rest of .nirs format
                     if device==1
                         [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, channelmask);
                     elseif device==2
                         SD.MeasListAct = [channelmask'; channelmask'];
                         SD.MeasListVis = SD.MeasListAct;
                     end
-            
+                    if length(stimmarks)>=1
+                        if begintime>0
+                            aux = aux(begintime:end,:);
+                            t = t(begintime:end);
+                        end
+                    end
+                    aux = aux((1:end-round(10*samprate)),:);
+                    t = t((1:end-round(10*samprate)),:);
+
                     %5) motion filter, convert to hemodynamic changes
                     [new_d, oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy] = fNIRSFilterPipeline(d, SD, samprate);
             
@@ -368,7 +436,7 @@ else
                         scanname=scanname(1:end-5);
                     end
                     d=new_d;
-                    save(strcat(outpath,filesep,scanname,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy');
+                    save(strcat(outpath,filesep,scanname,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','stimmarks');
                     save(strcat(outpath,filesep,scanname,'.nirs'),'aux','d','s','SD','t');
                 end
             end
@@ -378,3 +446,5 @@ else
     fprintf('\n\t Elapsed time: %g seconds\n', Elapsedtime);
 end
 end
+
+qualityAssessment(dataprefix,dyads,multiscan,size(d,2),samprate,0.1,strcat(rawdir,filesep,'PreProcessedFiles'));

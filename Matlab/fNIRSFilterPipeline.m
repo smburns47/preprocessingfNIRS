@@ -7,14 +7,13 @@ function [new_d, oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy]= fNIRSFilterP
     warning off; %sometimes hmrIntensity2Conc gives a warning we don't care about here
     %see hmrMotionArtifact in Homer2 documentation for parameter description
     numchannels = size(d,2)/2;
-    tInc = hmrMotionArtifact(d, samprate, SD, ones(length(d),1), 0.5, 2, 10, 5);
-    %see hmrMotionCorrectPCA in Homer2 documentation for parameter description
-    [dfiltered,~,~] = hmrMotionCorrectPCA(SD, d, tInc, 2);
+    d(:,SD.MeasListAct==0)=NaN;
+    [~,tIncCh] = hmrMotionArtifactByChannel(d, samprate, SD, ones(length(d),1), 1, 1, 5, 2);
+    dfiltered = BaselineVolatilityCorrection(d, SD, tIncCh);
+
     %see hmrIntensity2Conc in Homer2 documentation for parameter description
-    [dconverted, ~] = hmrIntensity2Conc(dfiltered, SD, samprate, 0.005, 0.5, [6, 6]);
+    [dconverted, ~] = hmrIntensity2Conc(dfiltered, SD, samprate, 0.008, 0.2, [6, 6]);
     dnormed = zscore(dconverted);
-    dnormed(:,:,(SD.MeasListAct')==0)=NaN;
-    dconverted(:,:,(SD.MeasListAct')==0)=NaN;
     oxy = zeros(size(dconverted,1), numchannels);
     deoxy = zeros(size(dconverted,1), numchannels);
     totaloxy = zeros(size(dconverted,1), numchannels);
