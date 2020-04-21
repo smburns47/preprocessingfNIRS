@@ -54,6 +54,7 @@ if device==1
     end
 end
 multiscan=0;
+anytofilter=0;
 
 
 fprintf('\n\t Preprocessing ...\n')
@@ -77,6 +78,7 @@ if dyads
             if ~exist(outpath,'dir')
             
                 %1) extract data values
+                anytofilter=1;
                 if device==1
                     [d1, sd_ind1, ~, ~, s1] = extractNIRxData(subj1folder);
                     [d2, sd_ind2, samprate, wavelengths, s2] = extractNIRxData(subj2folder);
@@ -196,6 +198,7 @@ if dyads
                 if ~exist(outpath,'dir')
             
                 %1) extract data values
+                    anytofilter=1;
                     if device==1
                         [d1, sd_ind1, ~, ~, s1] = extractNIRxData(subj1folder);
                         [d2, sd_ind2, samprate, wavelengths, s2] = extractNIRxData(subj2folder);
@@ -304,6 +307,7 @@ else
             if ~exist(outpath,'dir')
                 
                 %1) extract data values
+                anytofilter=1;
                 if device==1
                     [d, sd_ind, samprate, wavelengths, s] = extractNIRxData(subjfolder);
                     probenumchannels = probeInfo.probes.nChannel0;
@@ -379,6 +383,7 @@ else
                 if ~exist(outpath,'dir')
                     
                     %1) extract data values
+                    anytofilter=1;
                     if device==1
                         [d, sd_ind, samprate, wavelengths, s] = extractNIRxData(subjfolder);
                         probenumchannels = probeInfo.probes.nChannel0;
@@ -446,6 +451,8 @@ else
     fprintf('\n\t Elapsed time: %g seconds\n', Elapsedtime);
 end
 
-qualityAssessment(dataprefix,dyads,multiscan,size(d,2),samprate,0.1,strcat(rawdir,filesep,'PreProcessedFiles'));
+if anytofilter
+    qualityAssessment(dataprefix,dyads,multiscan,size(d,2),samprate,0.1,strcat(rawdir,filesep,'PreProcessedFiles'));
+end
 
 end

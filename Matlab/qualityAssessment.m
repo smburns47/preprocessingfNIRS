@@ -223,12 +223,33 @@ if dyads
            outpath_ps=strcat(preprocdir,filesep,dyad,filesep,'postQAreport_subj2_allbadch_ps.csv');
            writetable(combinedtable,outpath_ps,'Delimiter',',');
         else
+            subscanname = 'scan';
+            if ~any(strcmp(scannames,subscanname))
+                scannames = [scannames,subscanname];
+                qatable2 = array2table(zeros(length(currdir)*2,1));
+                chtable2 = array2table(zeros(channelnum,1));
+                qatable2.Properties.VariableNames={subscanname};
+                chtable2.Properties.VariableNames={subscanname};
+                qatable_corr = [qatable_corr qatable2];
+                qatable_ps = [qatable_ps qatable2];
+                qatable_noise = [qatable_noise qatable2];
+                chtable_corr = [chtable_corr chtable2];
+                chtable_ps = [chtable_ps chtable2];
+                chtable_noise = [chtable_noise chtable2];
+                subjtable1_corr = [subjtable1_corr chtable2];
+                subjtable1_ps = [subjtable1_ps chtable2];
+                subjtable1_noise = [subjtable1_noise chtable2];
+                subjtable2_corr = [subjtable2_corr chtable2];
+                subjtable2_ps = [subjtable2_ps chtable2];
+                subjtable2_noise = [subjtable2_noise chtable2];
+            end
             %subj1
             scandir = dir(strcat(preprocdir,filesep,dyad,filesep,'*_subj1_preprocessed.mat'));
            if exist(strcat(preprocdir,filesep,dyad,filesep,scandir(1).name),'file')
                load(strcat(preprocdir,filesep,dyad,filesep,scandir(1).name))
                channelcount_corr = 0;
                channelcount_ps = 0;
+               noisecount = 0;
                for k=1:size(z_oxy1,2)
                    trace = z_oxy1(:,k);
                    if ~any(isnan(trace))
@@ -245,18 +266,18 @@ if dyads
                        PS2 = angle(hilbert(trace_orig));
                        avgPS = nanmean(1-sin(abs(PS1-PS2)/2),1);
                        if autocorrdiff<(1-thresh_corr)
-                           subjtable1_corr.(subscanname)(k) = 1;
-                           chtable_corr.(subscanname)(k) = chtable_corr.(subscanname)(k) + 1;
+                           subjtable1_corr.scan(k) = 1;
+                           chtable_corr.scan(k) = chtable_corr.scan(k) + 1;
                            channelcount_corr=channelcount_corr+1;
                        end
                        if avgPS<(1-thresh_ps)
-                            subjtable1_ps.(subscanname)(k) = 1;
-                            chtable_ps.(subscanname)(k) = chtable_ps.(subscanname)(k) + 1;
+                            subjtable1_ps.scan(k) = 1;
+                            chtable_ps.scan(k) = chtable_ps.scan(k) + 1;
                             channelcount_ps=channelcount_ps+1;
                        end
                    else
-                      subjtable1_noise.(subscanname)(k) = 1;
-                      chtable_noise.(subscanname)(k) = chtable_noise.(subscanname)(k) + 1;
+                      subjtable1_noise.scan(k) = 1;
+                      chtable_noise.scan(k) = chtable_noise.scan(k) + 1;
                       noisecount=noisecount+1;
                    end
                end
@@ -270,6 +291,7 @@ if dyads
                load(strcat(preprocdir,filesep,dyad,filesep,scandir(1).name))
                channelcount_corr = 0;
                channelcount_ps = 0;
+               noisecount = 0;
                for k=1:size(z_oxy2,2)
                    trace = z_oxy2(:,k);
                    if ~any(isnan(trace))
@@ -286,18 +308,18 @@ if dyads
                        PS2 = angle(hilbert(trace_orig));
                        avgPS = nanmean(1-sin(abs(PS1-PS2)/2),1);
                        if autocorrdiff<(1-thresh_corr)
-                           subjtable2_corr.(subscanname)(k) = 1;
-                           chtable_corr.(subscanname)(k) = chtable_corr.(subscanname)(k) + 1;
+                           subjtable2_corr.scan(k) = 1;
+                           chtable_corr.scan(k) = chtable_corr.scan(k) + 1;
                            channelcount_corr=channelcount_corr+1;
                        end
                        if avgPS<(1-thresh_ps)
-                            subjtable2_ps.(subscanname)(k) = 1;
-                            chtable_ps.(subscanname)(k) = chtable_ps.(subscanname)(k) + 1;
+                            subjtable2_ps.scan(k) = 1;
+                            chtable_ps.scan(k) = chtable_ps.scan(k) + 1;
                             channelcount_ps=channelcount_ps+1;
                        end
                    else
-                      subjtable2_noise.(subscanname)(k) = 1;
-                      chtable_noise.(subscanname)(k) = chtable_noise.(subscanname)(k) + 1;
+                      subjtable2_noise.scan(k) = 1;
+                      chtable_noise.scan(k) = chtable_noise.scan(k) + 1;
                       noisecount=noisecount+1;
                    end
                end
@@ -459,16 +481,29 @@ else
            outpath_ps=strcat(preprocdir,filesep,subj,filesep,'postQAreport_allbadch_ps.csv');
            writetable(combinedtable,outpath_ps,'Delimiter',',');
         else
-            qatable2 = array2table(zeros(length(currdir),1));
-            qatable2.Properties.VariableNames='scan';
-            qatable_corr = [qatable_corr qatable2];
-            qatable_ps = [qatable_ps qatable2];
-            qatable_noise = [qatable_noise qatable2];
+            subscanname = 'scan';
+            if ~any(strcmp(scannames,subscanname))
+                scannames = [scannames,subscanname];
+                qatable2 = array2table(zeros(length(currdir),1));
+                qatable2.Properties.VariableNames={subscanname};
+                chtable2 = array2table(zeros(channelnum,1));
+                chtable2.Properties.VariableNames={subscanname};
+                qatable_corr = [qatable_corr qatable2];
+                qatable_ps = [qatable_ps qatable2];
+                qatable_noise = [qatable_noise qatable2];
+                chtable_corr = [chtable_corr chtable2];
+                chtable_ps = [chtable_ps chtable2];
+                chtable_noise = [chtable_noise chtable2];
+                subjtable_corr = [subjtable_corr chtable2];
+                subjtable_ps = [subjtable_ps chtable2];
+                subjtable_noise = [subjtable_noise chtable2];
+            end
             scandir = dir(strcat(preprocdir,filesep,subj,filesep,'*_preprocessed.mat'));
             if exist(strcat(preprocdir,filesep,subj,filesep,scandir(1).name),'file')
                load(strcat(preprocdir,filesep,subj,filesep,scandir(1).name))
                channelcount_corr = 0;
                channelcount_ps = 0;
+               noisecount = 0;
                for k=1:size(z_oxy,2)
                    trace = z_oxy(:,k);
                    if ~any(isnan(trace))
@@ -485,20 +520,23 @@ else
                        PS2 = angle(hilbert(trace_orig));
                        avgPS = nanmean(1-sin(abs(PS1-PS2)/2),1);
                        if autocorrdiff<(1-thresh_corr)
-                           subjtable_corr.(subscanname)(k) = 1;
-                           chtable_corr.(subscanname)(k) = chtable_corr.(subscanname)(k) + 1;
+                           subjtable_corr.scan(k) = 1;
+                           chtable_corr.scan(k) = chtable_corr.scan(k) + 1;
                            channelcount_corr=channelcount_corr+1;
                        end
                        if avgPS<(1-thresh_ps)
-                            subjtable_ps.(subscanname)(k) = 1;
-                            chtable_ps.(subscanname)(k) = chtable_ps.(subscanname)(k) + 1;
+                            subjtable_ps.scan(k) = 1;
+                            chtable_ps.scan(k) = chtable_ps.scan(k) + 1;
                             channelcount_ps=channelcount_ps+1;
                        end
                    else
-                      subjtable_noise.(subscanname)(k) = 1;
-                      chtable_noise.(subscanname)(k) = chtable_noise.(subscanname)(k) + 1;
+                      subjtable_noise.scan(k) = 1;
+                      chtable_noise.scan(k) = chtable_noise.scan(k) + 1;
                       noisecount=noisecount+1;
                    end
+                   qatable_corr.scan(i) = channelcount_corr;
+                   qatable_ps.scan(i) = channelcount_ps;
+                   qatable_noise.scan(i) = noisecount;
                end
             end
            outpath_noise=strcat(preprocdir,filesep,subj,filesep,'preQAreport_noisychannels.csv');
