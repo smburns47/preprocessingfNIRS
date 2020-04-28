@@ -1,4 +1,4 @@
-function newd = BaselineVolatilityCorrection(d, SD, tIncCh)
+function newd = BaselineVolatilityCorrection(d, samprate, SD, tIncCh)
 
 mlAct = SD.MeasListAct; % prune bad channels
 
@@ -16,7 +16,7 @@ for ii = 1:length(lstAct)
         % Find indexes of starts and ends of MA segments
         lstMs = find(diff(tIncCh(:,idx_ch))==-1);   % starting indexes of mvt segments
         lstMf = find(diff(tIncCh(:,idx_ch))==1);    % ending indexes of mvt segments
-        
+            
         % Case where there's a single MA segment, that either starts at the
         % beginning or ends at the end of the total time duration
         if isempty(lstMf)
@@ -46,15 +46,18 @@ for ii = 1:length(lstAct)
             badstd = std(dataseg);
             badmean = nanmean(dataseg,1);
             prevmean = nanmean(newd(1:lst(1)-1,lstAct(ii)),1);
+            if isnan(prevmean)
+                prevmean = nanmean(newd(:,lstAct(ii)),1);
+            end
             adjusted = prevmean + ((dataseg - badmean) .* (fullstd(1,lstAct(ii))/badstd));
             newd(lst,lstAct(ii)) = adjusted;
             
             newmean = nanmean(newd(1:lst(end),lstAct(ii)),1);
             if lst(end)~=size(newd,1)
-                if length(newd(lst(end)+1:end,lstAct(ii)))<=100
-                nextmean = nanmean(newd(lst(end)+1:end,lstAct(ii)),1);
+                if length(newd(lst(end)+1:end,lstAct(ii)))<=30*round(samprate)
+                    nextmean = nanmean(newd(lst(end)+1:end,lstAct(ii)),1);
                 else
-                    nextmean = nanmean(newd(lst(end)+1:lst(end)+101,lstAct(ii)),1);
+                    nextmean = nanmean(newd(lst(end)+1:lst(end)+(30*round(samprate)+1),lstAct(ii)),1);
                 end
                 meandiff = newmean-nextmean;
                 newd(lst(end)+1:end,lstAct(ii)) = newd(lst(end)+1:end,lstAct(ii)) + meandiff;

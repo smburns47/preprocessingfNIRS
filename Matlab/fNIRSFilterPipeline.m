@@ -16,7 +16,7 @@ function [new_d, oxy, deoxy, totaloxy, z_oxy, z_deoxy, z_totaloxy]= fNIRSFilterP
     %discontinutites and changes in volatility, and then generating report
     %for which channels might still have problematic artifacts after processing
     %while I work on learning Homer3. Blog description coming soon.
-    dfiltered = BaselineVolatilityCorrection(d, SD, tIncCh);
+    dfiltered = BaselineVolatilityCorrection(d, samprate, SD, tIncCh);
 
     %see hmrIntensity2Conc in Homer2 documentation for parameter description
     [dconverted, ~] = hmrIntensity2Conc(dfiltered, SD, samprate, 0.008, 0.2, [6, 6]);
