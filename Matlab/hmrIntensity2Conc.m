@@ -43,7 +43,11 @@ end
 dod = hmrIntensity2OD( d );
 
 % bandpass filter
-dod = hmrBandpassFilt( dod, fs, hpf, lpf );
+badchannels = any(isnan(dod));
+dodreduced = dod(:,~badchannels); %new versions of filtfilt can't handle NaN
+                                %columns, so reducing matrix here
+dodreduced = hmrBandpassFilt( dodreduced, fs, hpf, lpf );
+dod(:,~badchannels) = dodreduced;
 
 % convert to Concentrations
 dc = hmrOD2Conc( dod, SD, ppf );
