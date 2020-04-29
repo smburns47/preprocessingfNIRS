@@ -42,9 +42,14 @@ if length(currdir)<1
     error(['ERROR: No data files found with ',dataprefix,' prefix']);
 end
 
-supported_devices = {'NIRx','TechEn'};
+supported_devices = {'NIRx-NirScout','NIRx-NirSport1','NIRx-NirSport2','TechEn'};
 [device,~] = listdlg('PromptString', 'Select acquisition device:',...
     'SelectionMode', 'single', 'ListString', supported_devices);
+if device <= 2
+    device=1;
+elseif device >= 3
+    device=2;
+end
 
 if device==1
     [probefile,probepath] = uigetfile('*_probeInfo.mat','Choose probeInfo File');
