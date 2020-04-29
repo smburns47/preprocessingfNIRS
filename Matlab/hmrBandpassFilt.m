@@ -28,7 +28,11 @@ if length(fs)>1
     fs = 1/(fs(2)-fs(1));
 end
 
-
+badchannels = any(isnan(y));
+yreduced = y(:,~badchannels); %new versions of Matlab's built in filtfilt 
+                                %(2018+) can't handle NaN columns, so 
+                                %reducing matrix here and expanding back 
+                                %out after bandpass filtering
 
 % low pass filter
 FilterType = 1;
@@ -41,7 +45,8 @@ elseif FilterType==4
 else
 %    [fb,fa] = MakeFilter(FilterType,FilterOrder,fs,lpf,'low',Filter_Rp);
 end
-ylpf=filtfilt(fb,fa,y);
+
+yreducedlpf=filtfilt(fb,fa,yreduced);
 
 
 % high pass filter
@@ -56,7 +61,14 @@ else
 end
 
 if FilterType~=5
-    y2=filtfilt(fb,fa,ylpf); 
+    y2reduced=filtfilt(fb,fa,yreducedlpf); 
 else
-    y2 = ylpf;
+    y2reduced = yreducedlpf;
+end
+
+ylpf = y;
+y2 = y;
+ylpf(:,~badchannels) = yreducedlpf;
+y2(:,~badchannels) = y2reduced;
+
 end
