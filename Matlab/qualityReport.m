@@ -1,4 +1,4 @@
-function qualityReport(dataprefix,hyperscan,multiscan,scannames,preprocdir)
+function qualityReport(dataprefix,hyperscan,multiscan,scannames,channelnum,preprocdir)
 
 %inputs: 
 %       dataprefix: string. Prefix of every folder name that should be considered a
@@ -29,22 +29,22 @@ fprintf('\n\t Generating data quality reports ...\n')
     reverseStr = '';
   
 qatable1a = array2table(cell(1,1));
+qatable1a.Properties.VariableNames={'subjname'};
 qatable1b = array2table(zeros(1,length(scannames)));
-varnames = cat(2,'subjname',scannames);
+qatable1b.Properties.VariableNames=scannames;
 qatable1 = [qatable1a qatable1b];
-qatable1.Properties.VariableNames=varnames;
 qatable2 = qatable1;
 qatable_copy = qatable1;
 chtable1a = array2table([1:channelnum]');
+chtable1a.Properties.VariableNames={'channelnum'};
 chtable1b = array2table(zeros(channelnum,length(scannames)));
-varnames = cat(2,'channelnum',scannames);
+chtable1b.Properties.VariableNames=scannames;
 chtable1 = [chtable1a chtable1b];
-chtable1.Properties.VariableNames=varnames;
 chtable2 = chtable1;    
     
 if hyperscan
     for i=1:length(currdir)
-        msg = sprintf('\n\t dyad number %d/%d ...',i,length(currdir));
+        msg = sprintf('\n\t group number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);
         reverseStr = repmat(sprintf('\b'),1,length(msg));
         group=currdir(i).name;
@@ -54,8 +54,8 @@ if hyperscan
             subjname = groupdir(j).name;
             subjnamelength = length(subjname);
             qatable_copy.subjname{1} = subjname;
-            qatable1 = [qatable1 qatable_copy];
-            qatable2 = [qatable2 qatable_copy];
+            qatable1 = [qatable1; qatable_copy];
+            qatable2 = [qatable2; qatable_copy];
             subjdir = dir(strcat(preprocdir,filesep,group,filesep,subjname,filesep,dataprefix,'*'));
             
             if multiscan
@@ -104,14 +104,14 @@ if hyperscan
 
 else
     for i=1:length(currdir)
-        msg = sprintf('\n\t dyad number %d/%d ...',i,length(currdir));
+        msg = sprintf('\n\t subject number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);
         reverseStr = repmat(sprintf('\b'),1,length(msg));
         subjname = groupdir(j).name;
         subjnamelength = length(subjname);
         qatable_copy.subjname{1} = subjname;
-        qatable1 = [qatable1 qatable_copy];
-        qatable2 = [qatable2 qatable_copy];
+        qatable1 = [qatable1; qatable_copy];
+        qatable2 = [qatable2; qatable_copy];
         subjdir = dir(strcat(preprocdir,filesep,subjname,filesep,dataprefix,'*'));
 
         if multiscan
