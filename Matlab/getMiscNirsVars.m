@@ -21,6 +21,6 @@ function [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeI
     SD.MeasListAct = [channelmask'; channelmask'];
     SD.MeasListVis = SD.MeasListAct;
     SD.SpatialUnit = 'cm';
-    aux = zeros(length(d),8);
-    t = 0:1/samprate:length(d)/samprate - 1/samprate;
+    aux = zeros(size(d,1),8);
+    t = 0:1/samprate:size(d,1)/samprate - 1/samprate;
 end

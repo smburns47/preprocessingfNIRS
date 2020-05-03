@@ -3,27 +3,22 @@
 %-----------------------------------------------
 %depends on inpaint_nans function, written by John D'Errico 2012
 
-function channelmask = removeBadChannels(d, samprate, satlength, QCoDthresh)
-    numchannels = size(d,2)/2;
+function [d, channelmask] = removeBadChannels(d, samprate, satlength, QCoDthresh)
+    numchannels = size(d,2)/2;    
     channelmask = ones(1,numchannels);
-    for c=1:numchannels
+    for c=1:size(d,2)
         %fix NaN points in time series if there are any
         %if too many in a row, mark as bad channel
         if sum(isnan(d(:,c)))>0
-             if ~isempty(strfind(isnan(d(:,c)), true(1,round(satlength*samprate)))) 
+             if ~isempty(strfind(isnan(d(:,c))', true(1,round(satlength*samprate)))) 
                   channelmask(1,c)=0;
              end
              newch = inpaint_nans(d(:,c),4);
              d(:,c)=newch;
         end
-        if sum(isnan(d(:,c+numchannels)))>0
-             if ~isempty(strfind(isnan(d(:,c+numchannels)), true(1,round(satlength*samprate)))) 
-                  channelmask(1,c)=0;
-             end
-             newch = inpaint_nans(d(:,c+numchannels),4);
-             d(:,c+numchannels)=newch;
-        end
-
+    end
+    
+    for c=1:numchannels
         %check QCoD of each channel
         meand=d(:,c)-mean(d(:,c));
         [psd1,~]=pwelch(meand,[],[],[],samprate);
