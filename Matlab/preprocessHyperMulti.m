@@ -41,6 +41,10 @@ for i=1:length(currdir)
             elseif device==2
                 [d, samprate, s, SD, aux, t] = extractTechEnData(scanfolder);
             end
+            digfile = strcat(scanfolder,filesep,'digpts.txt');
+            if device==2 && exist(digfile,'file')
+                mni_ch_table = getMNIcoords(digfile, SD);
+            end
 
             %2) Trim beginning of data to 10s before onset, if there is
             %a lot of dead time before that 
@@ -139,6 +143,7 @@ for i=1:length(currdir)
             z_deoxy(:,~z_totalmask) = NaN;
             z_totaloxy(:,~z_totalmask) = NaN;
             save(strcat(outpath,filesep,group,'_',subjname,'_preprocessed_nouncertainch.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
+            writetable(mni_ch_table,strcat(outpath,filesep,'channel_mnicoords.csv'),'Delimiter',',');
             end
         end
     end
