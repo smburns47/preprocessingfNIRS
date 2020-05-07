@@ -112,7 +112,7 @@ for i=1:length(currdir)
             % right now quality assessment is only run on the oxy values
             %TO DO?: in future implementation with GUI, ask usr which signal
             %they plan on analyzing (z scored or no, chromophore)
-            qamethod = 'ps';
+            qamethod = 'corr';
             thresh = 0.1;
             qamask = qualityAssessment(squeeze(dconverted(:,1,:)),samprate,qamethod,thresh);
             z_qamask = qualityAssessment(squeeze(dnormed(:,1,:)),samprate,qamethod,thresh);

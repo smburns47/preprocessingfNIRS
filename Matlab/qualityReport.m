@@ -158,13 +158,13 @@ else
     end
 end
 
-qaoutpath_noisy=strcat(preprocdir,filesep,'QAreport_allsubj_noisychannels.csv');
-qaoutpath_uncertain=strcat(preprocdir,filesep,'QAreport_allsubj_noisyandflaggedchannels.csv');
+qaoutpath_noisy=strcat(preprocdir,filesep,'QAreport_allsubj_cleanchannels.csv');
+qaoutpath_uncertain=strcat(preprocdir,filesep,'QAreport_allsubj_cleanandcertainchannels.csv');
 writetable(qatable1,qaoutpath_noisy,'Delimiter',',');
 writetable(qatable2,qaoutpath_uncertain,'Delimiter',',');
 
-choutpath_noisy=strcat(preprocdir,filesep,'QAreport_allch_noisychannels.csv');
-choutpath_uncertain=strcat(preprocdir,filesep,'QAreport_allch_noisyandflaggedchannels.csv');
+choutpath_noisy=strcat(preprocdir,filesep,'QAreport_allch_cleanchannels.csv');
+choutpath_uncertain=strcat(preprocdir,filesep,'QAreport_allch_cleanandcertainchannels.csv');
 writetable(chtable1,choutpath_noisy,'Delimiter',',');
 writetable(chtable1,choutpath_uncertain,'Delimiter',',');
 

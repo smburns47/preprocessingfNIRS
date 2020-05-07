@@ -15,11 +15,15 @@ qamask = zeros(1,size(data,2));
 for k=1:size(data,2)
     trace = data(:,k);
     if ~any(isnan(trace))
+        trace = zscore(trace);
         trace_orig = trace;
         offset=round(samprate);
-        for datapoint=(offset+6):(length(trace)-6)
+        test = nan(1,length(trace));
+        for datapoint=(offset+6):(length(trace)-(offset+6))
+           test(1,datapoint) = abs(trace(datapoint-offset,1)-trace(datapoint,1));
            if abs(trace(datapoint-offset,1)-trace(datapoint,1))>3
-               trace(datapoint-5:datapoint+5,1) = linspace(trace(datapoint-6,1),trace(datapoint+5,1),11);
+               tracelength = length(trace(datapoint-(5+offset):datapoint+(5+offset),1));
+               trace(datapoint-(5+offset):datapoint+(5+offset),1) = linspace(trace(datapoint-(5+offset),1),trace(datapoint+(5+offset),1),tracelength);
            end
         end
         if strcmp(qamethod,'corr')
