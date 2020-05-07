@@ -44,34 +44,17 @@ if length(currdir)<1
     error(['ERROR: No data files found with ',dataprefix,' prefix']);
 end
 
-supported_devices = {'NIRx-NirScout','NIRx-NirSport1','NIRx-NirSport2','TechEn'};
-[device,~] = listdlg('PromptString', 'Select acquisition device:',...
-    'SelectionMode', 'single', 'ListString', supported_devices);
-if device <= 2
-    device=1;
-elseif device >= 3
-    device=2;
-end
-
-if device==1
-    [probefile,probepath] = uigetfile('*_probeInfo.mat','Choose probeInfo File');
-    load(fullfile(probepath,probefile));
-    if ~exist('probeInfo','var')
-        error('ERROR: Invalid probeInfo file (does not contain a probeInfo object');
-    end
-end
-
 if hyperscan
     if multiscan
-        preprocessHyperMulti(dataprefix, currdir, rawdir, device);
+        preprocessHyperMulti(dataprefix, currdir, rawdir);
     else
-        preprocessHyperSingle(dataprefix, currdir, rawdir, device);
+        preprocessHyperSingle(dataprefix, currdir, rawdir);
     end
 else
     if multiscan
-        preprocessSoloMulti(dataprefix, currdir, rawdir, device);
+        preprocessSoloMulti(dataprefix, currdir, rawdir);
     else
-        preprocessSoloSingle(dataprefix, currdir, rawdir, device);
+        preprocessSoloSingle(dataprefix, currdir, rawdir);
     end
 end
 

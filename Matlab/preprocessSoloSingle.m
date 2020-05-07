@@ -1,8 +1,25 @@
-function preprocessSoloSingle(dataprefix, currdir, rawdir, device)
+function preprocessSoloSingle(dataprefix, currdir, rawdir)
 
 fprintf('\n\t Preprocessing ...\n')
 reverseStr = '';
 Elapsedtime = tic;
+
+supported_devices = {'NIRx-NirScout','NIRx-NirSport1','NIRx-NirSport2','TechEn'};
+[device,~] = listdlg('PromptString', 'Select acquisition device:',...
+    'SelectionMode', 'single', 'ListString', supported_devices);
+if device <= 2
+    device=1;
+elseif device >= 3
+    device=2;
+end
+
+if device==1
+    [probefile,probepath] = uigetfile('*_probeInfo.mat','Choose probeInfo File');
+    load(fullfile(probepath,probefile));
+    if ~exist('probeInfo','var')
+        error('ERROR: Invalid probeInfo file (does not contain a probeInfo object');
+    end
+end
 
 for i=1:length(currdir)
     subjname=currdir(i).name;
@@ -54,7 +71,7 @@ for i=1:length(currdir)
             QCoDthresh = 0.1;
             [d, channelmask] = removeBadChannels(d, samprate, satlength, QCoDthresh);
             if device==1
-                [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, totalmask);
+                [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, channelmask);
             elseif device==2
                 SD.MeasListAct = [channelmask'; channelmask'];
                 SD.MeasListVis = SD.MeasListAct;
@@ -126,7 +143,9 @@ for i=1:length(currdir)
             z_deoxy(:,~totalmask) = NaN;
             z_totaloxy(:,~totalmask) = NaN;
             save(strcat(outpath,filesep,group,'_',subjname,'_preprocessed_nouncertainch.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
-            writetable(mni_ch_table,strcat(outpath,filesep,'channel_mnicoords.csv'),'Delimiter',',');
+            if exist('mni_ch_table','var')
+                writetable(mni_ch_table,strcat(outpath,filesep,'channel_mnicoords.csv'),'Delimiter',',');
+            end
     end
 
 end
