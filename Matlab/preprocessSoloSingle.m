@@ -89,14 +89,15 @@ for i=1:length(currdir)
             [dconverted, dnormed] = fNIRSFilterPipeline(d, SD, samprate);
 
             %5) final data quality assessment, remove uncertain channels
-            % default is to use phase synchrony to check how impactful
-            % remaining spikes are - can change to "corr" as well
+            % default is to use Pearson's correlation to check how impactful
+            % remaining spikes are - can change to "ps" as well if you're
+            % using phase synchrony in your analyses instead
             % default QA threshold is 0.1 - amount of measurement error
             % to be allowed in data (out of 1)
             % right now quality assessment is only run on the oxy values
             %TO DO?: in future implementation with GUI, ask usr which signal
             %they plan on analyzing (z scored or no, chromophore)
-            qamethod = 'ps';
+            qamethod = 'corr';
             thresh = 0.1;
             qamask_oxy = qualityAssessment(dconverted(:,1,:),samprate,qamethod,thresh);
             z_qamask_oxy = qualityAssessment(dnormed(:,1,:),samprate,qamethod,thresh);

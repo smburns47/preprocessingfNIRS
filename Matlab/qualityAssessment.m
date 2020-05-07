@@ -18,14 +18,31 @@ for k=1:size(data,2)
         trace = zscore(trace);
         trace_orig = trace;
         offset=round(samprate);
-        test = nan(1,length(trace));
-        for datapoint=(offset+6):(length(trace)-(offset+6))
-           test(1,datapoint) = abs(trace(datapoint-offset,1)-trace(datapoint,1));
+        bigchanges = zeros(length(trace),1);
+        for datapoint=((offset*2)+1):(length(trace)-((offset*2)+1))
            if abs(trace(datapoint-offset,1)-trace(datapoint,1))>3
-               tracelength = length(trace(datapoint-(5+offset):datapoint+(5+offset),1));
-               trace(datapoint-(5+offset):datapoint+(5+offset),1) = linspace(trace(datapoint-(5+offset),1),trace(datapoint+(5+offset),1),tracelength);
+               bigchanges(datapoint-(offset*2):datapoint+(offset*2),1) = 1;
+%                tracelength = length(trace(datapoint-(5+offset):datapoint+(5+offset),1));
+%                trace(datapoint-(5+offset):datapoint+(5+offset),1) = linspace(trace(datapoint-(5+offset),1),trace(datapoint+(5+offset),1),tracelength);
            end
         end
+        lstMs = find(diff(bigchanges(:,1))==1);
+        lstMf = find(diff(bigchanges(:,1))==-1);
+        if length(lstMs) ~= length(lstMf)
+            if length(lstMf)>length(lstMs)
+               lstMs = [2;lstMs];
+            end
+            if length(lstMf)<length(lstMs)
+               lstMf(end+1,1) = size(bigchanges,1)-1;
+            end
+        end
+        if ~isempty(lstMs)
+            for segment = 1:length(lstMs)
+                tracelength = length(trace(lstMs(segment):lstMf(segment),1));
+                trace(lstMs(segment):lstMf(segment)) = linspace(trace(lstMs(segment)-1,1),trace(lstMf(segment)+1,1),tracelength);
+            end
+        end
+        
         if strcmp(qamethod,'corr')
             autocorrdiff = corrcoef(trace_orig, trace);
             autocorrdiff = autocorrdiff(1,2);
