@@ -76,11 +76,6 @@ for i=1:length(currdir)
                 end
             end
 
-            %trim off last ten seconds, to remove edge artifacts that
-            %might mess up hemodynamics calculation
-            d = d((1:end-round(10*samprate)),:);
-            s = s((1:end-round(10*samprate)),:);
-
             %3) identify noisy channels
             satlength = 2; %in seconds
             QCoDthresh = 0.1;
