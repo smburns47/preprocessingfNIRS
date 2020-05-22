@@ -88,7 +88,7 @@ if hyperscan
                     goodchannels = ~isnan(z_oxy(1,:));
                     sumgoodchannels = sum(goodchannels);
                     qatable1.scan(end) = sumgoodchannels;
-                    chtable1.scan(:) = chtable1.(subscanname)(:) + goodchannels';
+                    chtable1.scan(:) = chtable1.scan(:) + goodchannels';
                 end
                 scandir = dir(strcat(preprocdir,filesep,group,filesep,subjname,filesep,'*_nouncertainch.mat'));
                 if exist(strcat(preprocdir,filesep,group,filesep,subjname,filesep,scandir(1).name),'file')
@@ -96,7 +96,7 @@ if hyperscan
                     goodchannels = ~isnan(z_oxy(1,:));
                     sumgoodchannels = sum(goodchannels);
                     qatable2.scan(end) = sumgoodchannels;
-                    chtable2.scan(:) = chtable2.(subscanname)(:) + goodchannels';
+                    chtable2.scan(:) = chtable2.scan(:) + goodchannels';
                 end
             end
         end
@@ -107,7 +107,7 @@ else
         msg = sprintf('\n\t subject number %d/%d ...',i,length(currdir));
         fprintf([reverseStr,msg]);
         reverseStr = repmat(sprintf('\b'),1,length(msg));
-        subjname = groupdir(j).name;
+        subjname = currdir(i).name;
         subjnamelength = length(subjname);
         qatable_copy.subjname{1} = subjname;
         qatable1 = [qatable1; qatable_copy];
@@ -144,7 +144,7 @@ else
                 goodchannels = ~isnan(z_oxy(1,:));
                 sumgoodchannels = sum(goodchannels);
                 qatable1.scan(end) = sumgoodchannels;
-                chtable1.scan(:) = chtable1.(subscanname)(:) + goodchannels';
+                chtable1.scan(:) = chtable1.scan(:) + goodchannels';
             end
             scandir = dir(strcat(preprocdir,filesep,subjname,filesep,'*_nouncertainch.mat'));
             if exist(strcat(preprocdir,filesep,subjname,filesep,scandir(1).name),'file')
@@ -152,7 +152,7 @@ else
                 goodchannels = ~isnan(z_oxy(1,:));
                 sumgoodchannels = sum(goodchannels);
                 qatable2.scan(end) = sumgoodchannels;
-                chtable2.scan(:) = chtable2.(subscanname)(:) + goodchannels';
+                chtable2.scan(:) = chtable2.scan(:) + goodchannels';
             end
         end
     end

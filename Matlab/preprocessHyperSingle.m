@@ -97,8 +97,8 @@ for i=1:length(currdir)
             %they plan on analyzing (z scored or no, chromophore)
             qamethod = 'corr';
             thresh = 0.1;
-            qamask_oxy = qualityAssessment(dconverted(:,1,:),samprate,qamethod,thresh);
-            z_qamask_oxy = qualityAssessment(dnormed(:,1,:),samprate,qamethod,thresh);
+            qamask = qualityAssessment(dconverted(:,1,:),samprate,qamethod,thresh);
+            z_qamask = qualityAssessment(dnormed(:,1,:),samprate,qamethod,thresh);
             
             %6) Output results
             mkdir(outpath)
@@ -108,6 +108,7 @@ for i=1:length(currdir)
             z_totalmask = channelmask;
             z_totalmask(~z_qamask) = 0;
 
+            numchannels = size(dconverted,3);
             oxy = zeros(size(dconverted,1), numchannels);
             deoxy = zeros(size(dconverted,1), numchannels);
             totaloxy = zeros(size(dconverted,1), numchannels);
@@ -138,9 +139,9 @@ for i=1:length(currdir)
             oxy(:,~totalmask) = NaN;
             deoxy(:,~totalmask) = NaN;
             totaloxy(:,~totalmask) = NaN;
-            z_oxy(:,~totalmask) = NaN;
-            z_deoxy(:,~totalmask) = NaN;
-            z_totaloxy(:,~totalmask) = NaN;
+            z_oxy(:,~z_totalmask) = NaN;
+            z_deoxy(:,~z_totalmask) = NaN;
+            z_totaloxy(:,~z_totalmask) = NaN;
             save(strcat(outpath,filesep,group,'_',subjname,'_preprocessed_nouncertainch.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
             if exist('mni_ch_table','var')
                 writetable(mni_ch_table,strcat(outpath,filesep,'channel_mnicoords.csv'),'Delimiter',',');
