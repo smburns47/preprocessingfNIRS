@@ -26,11 +26,9 @@ preprocessingfNIRS depends on two publicly available Matlab packages - inpaint_n
 - To download: clone or pull repo to your desired local directory. Then add folder and subfolders to your Matlab path via: 
 addpath(genpath('[YOUR DIRECTORY]'));
 
-- preprocessingfNIRS arguments: the function takes 2 arguments - your dataprefix (string; prefix of every folder name that should be considered a data folder. E.g., MIN for MIN_101, MIN_102, etc.) and dyads marker (boolean. 1 if hyperscanning, 0 if single subject). No output arguments, but saves a .nirs file of raw data and a .mat file of z-scored and non z-scored oxy, deoxy, and totaloxy matrices into a new folder called PreProcessedFiles (timepoint x channel).
+- preprocessingfNIRS arguments: the function takes 3 arguments - your dataprefix (string; prefix of every folder name that should be considered a data folder. E.g., MIN for MIN_101, MIN_102, etc.) hyperscanning marker (boolean. 1 if hyperscanning, 0 if single subject), and multiscan marker (1 if multiple scans per participant, 0 if single scan). No output arguments, but saves a .mat file of z-scored and non z-scored oxy, deoxy, and totaloxy matrices into a new folder called PreProcessedFiles (timepoint x channel). Also saves variables that would go into the .nirs format like t and s. 
 
-- preprocessingfNIRS requirements: besides dependencies installed, data must be in the following structure: MAIN_DIRECTORY/SUBJECT/SCAN/raw files. Can also be MAIN_DIRECTORY/SUBJECT/raw if only one scan per person was collected. If dyads, structure will be MAIN_DIRECTORY/DYAD/SCAN/SUBJ_NUM/raw files, or without the scan level if only one scan per dyad was collected. All files must be together in each raw file folder. All subjects and scans must start with a study-specific prefix.
-
-- testQCoD arguments: testsubjpath (relative path to one scan folder with all raw nirx files), QCoDthresh (QCoD threshold to test out), and suppressPlot (0 or 1. 0 to let plots happen, 1 to keep them from coming up). Output is the channel mask, a vector of 1s and 0s where 1s correspond to good channels and 0s to bad. 
+- preprocessingfNIRS requirements: besides dependencies installed, data must be in the following structure: MAIN_DIRECTORY/GROUP/SUBJECT/SCAN/raw files. Omit Group or Scan level if the data is not hyperscanning or not multiscan, respectively. All files must be together in each raw file folder. All subjects and scans must start with a study-specific prefix.
 
 # Known Difficulties
 Since this is still being worked on, here are some known issues that might pop up and how to fix them right now:

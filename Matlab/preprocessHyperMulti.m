@@ -136,7 +136,7 @@ for i=1:length(currdir)
                 new_d(:,(c*2)-1) = oxy(:,c);
                 new_d(:,c*2) = deoxy(:,c);
             end
-            save(strcat(outpath,filesep,group,'_',subjname,'_',scanname,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
+            save(strcat(outpath,filesep,group,'_',scanname,'_preprocessed.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
             
             oxy(:,~channelmask) = NaN;
             deoxy(:,~channelmask) = NaN;
@@ -144,7 +144,7 @@ for i=1:length(currdir)
             z_oxy(:,~channelmask) = NaN;
             z_deoxy(:,~channelmask) = NaN;
             z_totaloxy(:,~channelmask) = NaN;
-            save(strcat(outpath,filesep,group,'_',subjname,'_',scanname,'_preprocessed_nonoisych.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
+            save(strcat(outpath,filesep,group,'_',scanname,'_preprocessed_nonoisych.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
             
             oxy(:,~totalmask) = NaN;
             deoxy(:,~totalmask) = NaN;
@@ -152,7 +152,7 @@ for i=1:length(currdir)
             z_oxy(:,~z_totalmask) = NaN;
             z_deoxy(:,~z_totalmask) = NaN;
             z_totaloxy(:,~z_totalmask) = NaN;
-            save(strcat(outpath,filesep,group,'_',subjname,'_',scanname,'_preprocessed_nouncertainch.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
+            save(strcat(outpath,filesep,group,'_',scanname,'_preprocessed_nouncertainch.mat'),'oxy', 'deoxy', 'totaloxy','z_oxy', 'z_deoxy', 'z_totaloxy','s','samprate','t','SD');
             if exist('mni_ch_table','var')
                 writetable(mni_ch_table,strcat(outpath,filesep,'channel_mnicoords.csv'),'Delimiter',',');
             end
