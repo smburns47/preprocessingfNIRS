@@ -19,18 +19,16 @@ for k=1:size(data,2)
         trace_orig = trace;
         offset=round(samprate);
         bigchanges = zeros(length(trace),1);
-        for datapoint=((offset*2)+1):(length(trace)-((offset*2)+1))
+        for datapoint=((offset*3)+1):(length(trace)-((offset*3)+1))
            if abs(trace(datapoint-offset,1)-trace(datapoint,1))>3
-               bigchanges(datapoint-(offset*2):datapoint+(offset*2),1) = 1;
-%                tracelength = length(trace(datapoint-(5+offset):datapoint+(5+offset),1));
-%                trace(datapoint-(5+offset):datapoint+(5+offset),1) = linspace(trace(datapoint-(5+offset),1),trace(datapoint+(5+offset),1),tracelength);
+               bigchanges(datapoint-(offset*3):datapoint+(offset*3),1) = 1;
            end
         end
         lstMs = find(diff(bigchanges(:,1))==1);
         lstMf = find(diff(bigchanges(:,1))==-1);
         if length(lstMs) ~= length(lstMf)
             if length(lstMf)>length(lstMs)
-               lstMs = [2;lstMs];
+               lstMs = [1;lstMs];
             end
             if length(lstMf)<length(lstMs)
                lstMf(end+1,1) = size(bigchanges,1)-1;
@@ -39,7 +37,12 @@ for k=1:size(data,2)
         if ~isempty(lstMs)
             for segment = 1:length(lstMs)
                 tracelength = length(trace(lstMs(segment):lstMf(segment),1));
-                trace(lstMs(segment):lstMf(segment)) = linspace(trace(lstMs(segment)-1,1),trace(lstMf(segment)+1,1),tracelength);
+                if lstMs(1) == 1
+                    pretrace = nanmean(trace(lstMf(1):lstMf(1)+round(10*samprate)));
+                    trace(lstMs(segment):lstMf(segment)) = linspace(pretrace,trace(lstMf(segment)+1),tracelength);
+                else
+                    trace(lstMs(segment):lstMf(segment)) = linspace(trace(lstMs(segment)-1),trace(lstMf(segment)+1),tracelength);
+                end
             end
         end
         

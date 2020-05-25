@@ -66,7 +66,7 @@ for i=1:length(currdir)
 
             %3) identify noisy channels
             satlength = 2; %in seconds
-            QCoDthresh = 0.1;
+            QCoDthresh = 0.6 - 0.03*samprate;
             [d, channelmask] = removeBadChannels(d, samprate, satlength, QCoDthresh);
             if device==1
                 [SD, aux, t] = getMiscNirsVars(d, sd_ind, samprate, wavelengths, probeInfo, channelmask);
