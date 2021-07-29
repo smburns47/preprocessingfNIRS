@@ -1,0 +1,3 @@
+Need to do for preprocessingfNIRS:
+
+1/12/21 - extracted coordinates for use in spatial filter is using the NIRx structure right now, but haven't updated it to be agnostic to NIRx vs. TechEn

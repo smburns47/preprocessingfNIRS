@@ -4,6 +4,9 @@ fprintf('\n\t Preprocessing ...\n')
 reverseStr = '';
 Elapsedtime = tic;
 
+msg = sprintf('\n\t select device ...');
+fprintf([reverseStr,msg]);
+reverseStr = repmat(sprintf('\b'),1,length(msg));
 supported_devices = {'NIRx-NirScout','NIRx-NirSport1','NIRx-NirSport2','TechEn'};
 [device,~] = listdlg('PromptString', 'Select acquisition device:',...
     'SelectionMode', 'single', 'ListString', supported_devices);
@@ -13,9 +16,13 @@ elseif device >= 3
     device=2;
 end
 
+
 if device==1
+    msg = sprintf('select a probeInfo file ...');
+    fprintf([reverseStr,msg]);
+    reverseStr = repmat(sprintf('\b'),1,length(msg));
     [probefile,probepath] = uigetfile('*_probeInfo.mat','Choose probeInfo File');
-    load(fullfile(probepath,probefile));
+    load(fullfile(probepath,probefile),'probeInfo');
     if ~exist('probeInfo','var')
         error('ERROR: Invalid probeInfo file (does not contain a probeInfo object');
     end
@@ -80,8 +87,8 @@ for i=1:length(currdir)
             aux = aux((1:end-round(10*samprate)),:);
             t = t((1:end-round(10*samprate)),:);
 
-            %4) motion filter, convert to hemodynamic changes
-            [dconverted, dnormed] = fNIRSFilterPipeline(d, SD, samprate);
+            %4) filter, convert to hemodynamic changes
+            [dconverted, dnormed] = fNIRSFilterPipeline(d, SD, samprate, probeInfo.probes.coords_c3);
 
             %5) final data quality assessment, remove uncertain channels
             % default is to use Pearson's correlation to check how impactful
